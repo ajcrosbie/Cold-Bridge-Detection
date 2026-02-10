@@ -14,8 +14,9 @@ def calc_sensitivity(ext_sfc_temp):
     """
 
     # extract into np arrays
-    x = np.array(list(ext_sfc_temp.keys())) # external temps
-    y = np.array(list(ext_sfc_temp.values())) # surface temps
+    x, y = zip(*ext_sfc_temp.items())
+    x = np.array(x) # external temps
+    y = np.array(y) # surface temps
 
     # check at least 2 data points
     if len(x) < 2:
@@ -69,7 +70,7 @@ def calc_psi(int_amb, ext, src, pix_temps, epsilon, lx, lch):
 
     # defining constants
     # thermal conductivity of air in W / (m.K) - changes with internal ambient temperature at constant pressure which we can assume
-    k = 0.0242  + (7.2 * (10 ** -5)) * (int_amb + 273.15)
+    k = 0.0242  + (7.2 * (10 ** -5)) * (int_amb - 273.15) # formula is for celsius
     # kinematic viscosity of air in m^2/s - changes with internal ambiet temperature at constant pressure
     miu = (1.716 * (10 ** -5)) * (273.15 + 110.4) / (int_amb + 110.4) * ((int_amb / 273.15) ** 1.5)
     rho = 101325 / (287 * int_amb)
@@ -92,10 +93,12 @@ def calc_psi(int_amb, ext, src, pix_temps, epsilon, lx, lch):
     hcx = nux * k / lch
 
     # calculate radiative coefficient for each pixel
-    hrx = epsilon * sigma * (tsx * src) * (tsx ** 2 + src ** 2)
+    hrx = epsilon * sigma * (tsx + src) * (tsx ** 2 + src ** 2)
 
-    # calculate total heat flow rate per pixel
-    qx = lx * (hcx + hrx) * (int_amb - tsx)
+    # calculate total heat flow rate per pixel - seperating into convection and radiation but using same eqn
+    qconv = lx * hcx * (int_amb - tsx)
+    qrad = lx * hrx * (src - tsx)
+    qx = qconv + qrad
 
     # identify uniform heat flow
     # SHAKY METHOD!!!!!!!!!
