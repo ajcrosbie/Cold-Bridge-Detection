@@ -9,6 +9,7 @@ def calc_sensitivity(ext_sfc_temp):
     ext_sfc_temp (Dict[float, float]): Dictionary of external to surface temperatures measured at the same time
     Shouldn't matter what units (K or C) but ideally consistent
 
+
     Returns:
     sensitivity (float): slope of external temperature compared to surface temperature of cold bridge
     """
