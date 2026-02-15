@@ -78,8 +78,17 @@ def rank_cbs_by_psi(cbs: Array[Array[Image]]):
 
     # Estimate the psi value for each cold bride to be the mean of all calculated psi values
     # TODO: is this a reasonable estimate?    
-    psis = np.mean([get_psis for cb in cbs], axis=1)
+    psis = np.array([get_psis(cb) for cb in cbs])
+    means = np.mean(psis, axis=1)
+    errs =  (np.max(psis, axis=1) - np.min(psis, axis=1)) / 2
 
     # return the cbs and their respective psi value, sorted by psi value
-    i = np.argsort(psis)
-    return np.zip(cbs[i], psis[i])
+    i = np.argsort(means)
+
+    plt.title("Psi value against location")
+    plt.ylabel("Psi value")
+    plt.xlabel("Location")
+    plt.boxplot(np.transpose(psis), vert=True)
+
+    plt.show()
+    return zip(i, means[i])
