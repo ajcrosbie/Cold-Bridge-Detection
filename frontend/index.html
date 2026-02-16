@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cold Bridge Detector</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="container" id="mainContainer">
+        <h1>Cold Bridge Detector</h1>
+
+        <div id="uploadSection">
+            <div class="upload-container" id="dropZone">
+                <div class="upload-icon">[+]</div>
+                <p>bang a picture in here</p>
+                <input type="file" id="fileInput" accept="image/jpeg, image/png, image/tiff">
+                <span id="fileLabel"></span>
+            </div>
+            <button id="submitBtn" class="btn btn-primary" disabled>Analyse Image</button>
+        </div>
+
+
+        <div id="resultsSection" class="results-section">
+            <div class="results-header">
+                <h2 id="mainResultText">Analysis Complete</h2>
+            </div>
+
+            <div class="image-preview-container">
+                <p style="margin-bottom: 10px; color: var(--secondary-color);">Analysed Image:</p>
+                <img id="resultImagePreview" src="" alt="Analysed Thermal Image">
+            </div>
+
+            <h3>General Findings</h3>
+            <div class="stats-grid" id="generalStatsGrid">
+                </div>
+
+            <button id="toggleTechStatsBtn" class="btn btn-secondary">Show Technical Stats v</button>
+            
+            <div id="techStatsContainer" class="tech-stats-container">
+                <div class="stats-grid" id="techStatsGrid"></div>
+            </div>
+
+            <button id="resetBtn" class="btn btn-primary" style="margin-top: 30px;">Analyse Another Image</button>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Analysing...</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
