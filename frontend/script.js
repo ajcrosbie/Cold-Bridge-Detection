@@ -13,9 +13,11 @@ const ResetBtn = document.getElementById('resetBtn')
 const MainResultText = document.getElementById('mainResultText')
 const GeneralStatsGrid = document.getElementById('generalStatsGrid')
 const TechStatsGrid = document.getElementById('techStatsGrid')
+// getting the circle overlay so we can slap some divs on it
+const CircleOverlay = document.getElementById('circleOverlay')
 
 
-
+//yare yare dazes
 
 
 
@@ -94,6 +96,10 @@ const handleFiles = (files) => {
     }
 }
 
+
+
+
+
 // function to show the results when the backend sends them back
 const displayResults = (data) => {
 
@@ -113,9 +119,40 @@ const displayResults = (data) => {
     // shoving the html we generated into the tech stats grid (same same... but differenttttttttttttttttttttt)
     TechStatsGrid.innerHTML = generateStatsHTML(data.technicalStats)
 
+    // wiping any old circles just in case so we dont get collision tings innit brevski
+    CircleOverlay.innerHTML = ''
+
+    // checking if the backend sent us any cold bridge coordinates
+    if (data.coldBridges && data.coldBridges.length > 0) {
+        
+        // looping over each cold bridge coordinate the backend sent
+        data.coldBridges.forEach(bridge => {
+            
+            // creating a new div element to be our circle
+            const circle = document.createElement('div')
+            // adding the class so it gets the css styles and glow
+            circle.className = 'cold-bridge-circle'
+            
+            // setting the x position (left) based on the percentage
+            circle.style.left = `${bridge.x}%`
+            // setting the y position (top) based on the percentage
+            circle.style.top = `${bridge.y}%`
+            // setting the width based on the radius
+            circle.style.width = `${bridge.radius}px`
+            // setting the height based on the radius
+            circle.style.height = `${bridge.radius}px`
+            
+            // slapping the circle onto the overlay container so it shows up on the image
+            CircleOverlay.appendChild(circle)
+        })
+    }
+
     // finally showing the whole results section to the user
     ResultsSection.style.display = 'block'
 }
+
+
+
 
 // looping over the dragenter and dragover events
 ;['dragenter', 'dragover'].forEach(eventName => {
@@ -201,6 +238,9 @@ ResetBtn.addEventListener('click', () => {
     SubmitBtn.disabled = true
     ResultImagePreview.src = ''
 
+    // wiping the circle overlay back to nothing
+    CircleOverlay.innerHTML = ''
+
     // hiding the tech stats container just in case it was open
     TechStatsContainer.classList.remove('active')
     // resetting the toggle button text back to default
@@ -255,6 +295,13 @@ SubmitBtn.addEventListener('click', () => {
             detected: true,
             // giving a short summary of what we found
             summary: "Significant Thermal Bridging Detected",
+
+            // creating an array of cold bridge coordinates using percentages so it scales properly
+            // x and y are percentages of the image width/height, radius is in pixels
+            coldBridges: [
+                { x: 50, y: 30, radius: 100 },
+                { x: 70, y: 75, radius: 45 }
+            ],
 
             // creating an array of general stats to show
             generalStats: [
