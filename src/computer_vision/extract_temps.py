@@ -99,7 +99,7 @@ def make_colour_to_temp_map(t_min: float, t_max:float, bar:MatLike) -> dict[[tup
     colour_to_temp = {}
     bar_h = bar.shape[0]
     for i in range(bar_h):
-        colour = bar[i, 0] # assume bar is monchrome across and barbox is fully within the bar
+        colour = bar[i, 0] # assume bar is monochrome across and barbox is fully within the bar
 
         temp = t_max - (i / bar_h) * (t_max - t_min)
         colour_to_temp[colour] = temp
@@ -117,13 +117,16 @@ def image_to_temperature_map(image_path: PathLike):
 
     bar_coords = find_bar_coords(img)
 
+    # bar = img[int(BAR_BOX.yt*h):int(BAR_BOX.yb*h),
+    #           int(BAR_BOX.xl*w):int(BAR_BOX.xr*w)]
+
     bar = img[bar_coords[0] : bar_coords[1], bar_coords[2] : bar_coords[3]]
 
     bar_h = bar.shape[0]
 
     colour_to_temp = make_colour_to_temp_map(t_min, t_max, bar)
 
-    temp_img = np.zeros((h, w))
+    temp_img = np.zeros((h, w))    
     for y in range(h):
         for x in range(w):
             pixel = img[y, x]
