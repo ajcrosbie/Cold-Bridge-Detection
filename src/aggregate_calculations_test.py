@@ -122,18 +122,82 @@ def test_rank():
 
     # call ranking function to ensure it runs without error
     ranked = aggregate_calculations.rank_cbs_by_psi([cb1, cb2])
-    # ranked should be a generator of tuples
-    first_cb, first_val = next(ranked)
-    assert isinstance(first_val, float)
+    assert np.isclose(ranked, [mean1, mean2], rtol=1e-6)
 
+def test_plot_psis():
+    cb1 = [
+        make_dummy_image(280, 287, 293, 273, 0.9, 0.001, 0.1),
+        make_dummy_image(286, 292, 296, 283, 0.92, 0.0015, 0.12),
+        make_dummy_image(277, 284, 290, 270, 0.88, 0.005, 1)
+    ]
+
+    cb2 = [
+        make_dummy_image(280, 287, 293, 263, 0.9, 0.001, 0.1),
+        make_dummy_image(286, 292, 296, 273, 0.92, 0.0015, 0.12),
+        make_dummy_image(277, 284, 290, 260, 0.88, 0.005, 1)
+    ]
+
+    aggregate_calculations.plot_psis([cb1, cb2])
+    aggregate_calculations.plot_psis([cb1, cb2])
+
+
+def test_plot_severities():
+    cb1 = [
+        make_dummy_image(280, 287, 293, 273, 0.9, 0.001, 0.1),
+        make_dummy_image(286, 292, 296, 283, 0.92, 0.0015, 0.12),
+        make_dummy_image(277, 284, 290, 270, 0.88, 0.005, 1)
+    ]
+
+    cb2 = [
+        make_dummy_image(280, 287, 293, 263, 0.9, 0.001, 0.1),
+        make_dummy_image(286, 292, 296, 273, 0.92, 0.0015, 0.12),
+        make_dummy_image(277, 284, 290, 260, 0.88, 0.005, 1)
+    ]
+
+    aggregate_calculations.plot_severities([cb1, cb2])
+    aggregate_calculations.plot_severities([cb1, cb2], False)
+
+
+def test_psis_to_severity():
+
+    psis = np.array([0, 0.04, 0.05, 0.1, 0.2, 0.4, 0.44, 0.48, 0.5, 1])
+    sevsA = np.array([aggregate_calculations.psi_to_severity(psi) for psi in psis])
+    sevsB = np.array([aggregate_calculations.psi_to_severity(psi, False) for psi in psis])
+
+    print (sevsA)
+    print (sevsB)
+    assert np.all(0 <= sevsA)
+    assert np.all(10 >= sevsB)
+    assert np.all(0 <= sevsB)
+    assert np.all(10 >= sevsA)
+    assert np.allclose(sevsA + sevsB , 10)
+
+def test_plot_frsis():
+    cb1 = [
+        make_dummy_image(280, 287, 293, 273, 0.9, 0.001, 0.1),
+        make_dummy_image(286, 292, 296, 283, 0.92, 0.0015, 0.12),
+        make_dummy_image(277, 284, 290, 270, 0.88, 0.005, 1)
+    ]
+
+    cb2 = [
+        make_dummy_image(280, 287, 293, 263, 0.9, 0.001, 0.1),
+        make_dummy_image(286, 292, 296, 273, 0.92, 0.0015, 0.12),
+        make_dummy_image(277, 284, 290, 260, 0.88, 0.005, 1)
+    ]
+
+    aggregate_calculations.plot_frsis([cb1, cb2])
 
 def main():
-    test_plot_psis_multiple_images()
-    test_plot_psis_single_image()
-    test_get_psis_single_image()
-    test_get_psis_multiple_images()
-    test_plot_sensitivities()
-    test_rank()
+    # test_plot_psis_multiple_images()
+    # test_plot_psis_single_image()
+    # test_get_psis_single_image()
+    # test_get_psis_multiple_images()
+    # test_plot_sensitivities()
+    # test_rank()
+    # test_plot_psis()
+    test_plot_severities()
+    # test_plot_frsis()
+    # test_psis_to_severity()
 
 if __name__ == "__main__":
     main()
