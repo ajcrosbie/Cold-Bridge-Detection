@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.constants import g, sigma
 
-def calc_sensitivity(ext_sfc_temp): 
+def calc_sensitivity(ext_sfc_temp: dict[float, float]) -> float: 
     """
     Calculate the cold bridge's sensitivity to outside temperature changes based on the given external temperatures and surface temperatures.
 
@@ -28,9 +28,7 @@ def calc_sensitivity(ext_sfc_temp):
 
     return slope
 
-
-
-def calc_frsi(int_sfc_temp, int_amb_temp, ext_temp):
+def calc_frsi(int_sfc_temp: float, int_amb_temp: float, ext_temp: float) -> float:
     """
     Calculates the cold bridge's frsi (temperature factor) given external temperature, internal ambient and surface temperatures. 
     Ideally can be mapped over np arrays of these values and then an average taken across all time points.
@@ -49,7 +47,7 @@ def calc_frsi(int_sfc_temp, int_amb_temp, ext_temp):
     
     return frsi
 
-def calc_psi(int_amb, ext, src, pix_temps, epsilon, lx, lch):
+def calc_psi(int_amb: float, ext: float, src: float, pix_temps: np.ndarray, epsilon: float, lx: float, lch: float) -> float:
     """
     Calculates the cold bridge's psi-value given internal ambient temperature, external temperature, surrounding radiative temperature (average temperature 
     of surrounding surfaces) and pixel surface temperatures (on cold bridge). 
@@ -59,7 +57,7 @@ def calc_psi(int_amb, ext, src, pix_temps, epsilon, lx, lch):
     int_amb (float): internal ambient temperature
     ext (float): external temperature
     src (float): surrounding surface temperature
-    pix_temps (float[]): temperatures of each pixel in cold bridge
+    pix_temps (np.ndarray): temperatures of each pixel in cold bridge
     Should be in K.
     epsilon (float): surface emissivity
     lx (float): pixel length
@@ -83,9 +81,8 @@ def calc_psi(int_amb, ext, src, pix_temps, epsilon, lx, lch):
     # use g  and sigma (stephen botzmann) from scipy.constants
 
     # method set out by O'Grady et al
-    tsx = np.array(pix_temps)
     # calculate Rayleigh Number for each pixel 
-    rax = g * beta * (int_amb - tsx) * (lch ** 3) / (nu * alpha)
+    rax = g * beta * (int_amb - pix_temps) * (lch ** 3) / (nu * alpha)
 
     # calculate Nusselt Number for each pixel 
     nux = (0.825 + (0.387 * (rax ** (1/6))) / (1 + (0.492 * alpha / nu) ** (9/16)) ** (8/27)) ** 2
@@ -94,11 +91,11 @@ def calc_psi(int_amb, ext, src, pix_temps, epsilon, lx, lch):
     hcx = nux * k / lch
 
     # calculate radiative coefficient for each pixel
-    hrx = epsilon * sigma * (tsx + src) * (tsx ** 2 + src ** 2)
+    hrx = epsilon * sigma * (pix_temps + src) * (pix_temps ** 2 + src ** 2)
 
     # calculate total heat flow rate per pixel - seperating into convection and radiation but using same eqn
-    qconv = lx * hcx * (int_amb - tsx)
-    qrad = lx * hrx * (src - tsx)
+    qconv = lx * hcx * (int_amb - pix_temps)
+    qrad = lx * hrx * (src - pix_temps)
     qx = qconv + qrad
 
     # identify uniform heat flow
