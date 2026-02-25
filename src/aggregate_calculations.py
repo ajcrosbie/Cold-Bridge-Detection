@@ -3,6 +3,7 @@ import numpy as np
 import value_calculation
 from image import Image
 import matplotlib.pyplot as plt
+from scipy import stats
 
 def plot_psis(images: Array[Image]):
     """
@@ -74,12 +75,60 @@ def rank_cbs_by_psi(cbs: Array[Array[Image]]):
     Ranks a set of cold bridges by their psi value
     
     :param cbs: Array of Image arrays. Each Image array corresponds to one suspected cold bridge
+    :return: List of tuples (cb_images, mean_psi, moe) sorted most to least severe by mean_psi
     """
 
-    # Estimate the psi value for each cold bride to be the mean of all calculated psi values
-    # TODO: is this a reasonable estimate?    
-    psis = np.mean([get_psis for cb in cbs], axis=1)
+    #   FIXME: CHANGED TOBYS CODE HERE TO WORK WITH CONFIDENCE STUFF I DID
+    # # Estimate the psi value for each cold bride to be the mean of all calculated psi values
+    # # TODO: is this a reasonable estimate?    
+    # psis = np.mean([get_psis for cb in cbs], axis=1)
 
-    # return the cbs and their respective psi value, sorted by psi value
-    i = np.argsort(psis)
-    return np.zip(cbs[i], psis[i])
+    # # return the cbs and their respective psi value, sorted by psi value
+    # i = np.argsort(psis)
+    # return np.zip(cbs[i], psis[i])
+
+    results = []
+    for cb_images in cbs:
+        # get array of psis for this cb
+        psis = get_psis(cb_images)
+
+        # calc the mean and margin of error
+        mean_psi, moe = calculate_psi_ci(psis)
+        results.append((cb_images, mean_psi, moe))
+
+    # return cbs, respective psi value, and margin of error, sorted by psi value
+    results.sort(key=lambda x: x[1], reverse=True)
+
+    return results
+
+def calculate_psi_ci(psis: np.ndarray, confidence_level: float = 0.95) -> tuple[float, float]:
+    """
+    Calculates the mean psi-value and its confidence interval margin of error.
+    
+    :param psis: Array of calculated psi-values for a single cold bridge
+    :param confidence_level: The desired confidence level (default 95%)
+    :return: A tuple containing (mean_psi, moe)
+    """
+    n = len(psis)
+
+    if n < 2:
+        return (float(np.mean(psis)), 0.0)
+    
+    mean_psi = np.mean(psis)
+    std_dev = np.std(psis, ddof=1)
+
+    # calculate standard error of mean
+    sem = std_dev/ np.sqrt(n)
+
+    # degrees of freedom
+    df = n-1
+
+    # t-test (small sample size) so
+    # t-score for confidence interval (two-tailed)
+    alpha = 1 - confidence_level
+    t_score = stats.t.ppf(1 - alpha/2, df)
+
+    # margin of error
+    moe = t_score * sem
+
+    return float(mean_psi), float(moe)
