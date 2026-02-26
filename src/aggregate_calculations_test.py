@@ -26,7 +26,7 @@ def test_plot_psis_single_image():
         lch=0.1,
     )
 
-    aggregate_calculations.plot_psis([img])
+    aggregate_calculations.plot_psis_single_cb([img])
 
 def test_get_psis_single_image():
 
@@ -62,7 +62,7 @@ def test_plot_psis_multiple_images():
         make_dummy_image(277, 284, 290, 270, 0.88, 0.005, 1)
     ]
 
-    aggregate_calculations.plot_psis(imgs)
+    aggregate_calculations.plot_psis_single_cb(imgs)
 
 def test_get_psis_multiple_images():
     imgs = [
@@ -122,7 +122,8 @@ def test_rank():
 
     # call ranking function to ensure it runs without error
     ranked = aggregate_calculations.rank_cbs_by_psi([cb1, cb2])
-    assert np.isclose(ranked, [mean1, mean2], rtol=1e-6)
+    assert np.isclose(np.mean(ranked[0][1]), mean1, rtol=1e-6)
+    assert np.isclose(np.mean(ranked[1][1]), mean2, rtol=1e-6)
 
 def test_plot_psis():
     cb1 = [
@@ -188,16 +189,16 @@ def test_plot_frsis():
     aggregate_calculations.plot_frsis([cb1, cb2])
 
 def main():
-    # test_plot_psis_multiple_images()
-    # test_plot_psis_single_image()
-    # test_get_psis_single_image()
-    # test_get_psis_multiple_images()
-    # test_plot_sensitivities()
+    test_plot_psis_multiple_images()
+    test_plot_psis_single_image()
+    test_get_psis_single_image()
+    test_get_psis_multiple_images()
+    test_plot_sensitivities()
     # test_rank()
-    # test_plot_psis()
+    test_plot_psis()
     test_plot_severities()
-    # test_plot_frsis()
-    # test_psis_to_severity()
+    test_plot_frsis()
+    test_psis_to_severity()
 
 if __name__ == "__main__":
     main()
