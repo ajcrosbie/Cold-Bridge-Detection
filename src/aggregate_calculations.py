@@ -3,6 +3,7 @@ import numpy as np
 import value_calculation
 from image import Image
 import matplotlib.pyplot as plt
+from scipy import stats
 
 def plot_psis_single_cb(images: Array[Image]):
     """
@@ -170,3 +171,35 @@ def psi_to_severity(psi: float, high_worse = True):
     sev = (psi - psi_low) * 10 / (psi_high-psi_low)
 
     return sev if high_worse else 10 - sev
+
+def calculate_psi_ci(psis: np.ndarray, confidence_level: float = 0.95) -> tuple[float, float]:
+    """
+    Calculates the mean psi-value and its confidence interval margin of error.
+    
+    :param psis: Array of calculated psi-values for a single cold bridge
+    :param confidence_level: The desired confidence level (default 95%)
+    :return: A tuple containing (mean_psi, moe)
+    """
+    n = len(psis)
+
+    if n < 2:
+        return (float(np.mean(psis)), 0.0)
+    
+    mean_psi = np.mean(psis)
+    std_dev = np.std(psis, ddof=1)
+
+    # calculate standard error of mean
+    sem = std_dev/ np.sqrt(n)
+
+    # degrees of freedom
+    df = n-1
+
+    # t-test (small sample size) so
+    # t-score for confidence interval (two-tailed)
+    alpha = 1 - confidence_level
+    t_score = stats.t.ppf(1 - alpha/2, df)
+
+    # margin of error
+    moe = t_score * sem
+
+    return float(mean_psi), float(moe)
