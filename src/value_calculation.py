@@ -103,7 +103,7 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     qx = qconv + qrad
 
     # identify uniform heat flow
-   # calculate Rayleigh and Nusselt Numbers for the non-cb wall using src
+    # calculate Rayleigh and Nusselt Numbers for the non-cb wall using src
     rax_u = g * beta * (int_amb - t_wall) * (lch ** 3) / (nu * alpha)
     nux_u = (0.825 + (0.387 * (rax_u ** (1/6))) / (1 + (0.492 * alpha / nu) ** (9/16)) ** (8/27)) ** 2
     
