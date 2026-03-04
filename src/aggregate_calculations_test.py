@@ -43,7 +43,7 @@ def test_get_psis_single_image():
     expected = value_calculation.calc_psi(
         img.int_amb,
         img.ext,
-        np.mean(img.get_sf()),
+        float(np.mean(img.get_sf())),
         img.get_cb(),
         img.epsilon,
         img.lx,
@@ -75,7 +75,7 @@ def test_get_psis_multiple_images():
         value_calculation.calc_psi(
             img.int_amb,
             img.ext,
-            np.mean(img.get_sf()),
+            float(np.mean(img.get_sf())),
             img.get_cb(),
             img.epsilon,
             img.lx,
@@ -96,7 +96,7 @@ def test_plot_sensitivities():
     ]
 
     expected = value_calculation.calc_sensitivity(
-            {img.ext: np.mean(img.get_cb()) for img in imgs}
+            {float(img.ext): float(np.mean(img.get_cb())) for img in imgs}
         )
 
     sensitivity = aggregate_calculations.plot_sensitivies(imgs)
@@ -115,15 +115,21 @@ def test_rank():
         make_dummy_image(277, 284, 290, 260, 0.88, 0.005, 1)
     ]
 
+    # package into dict
+    dummy_dict = {"Location 1": cb1, "Location 2": cb2}
+
     # sanity check: mean psi values of the two bridges should not be equal
     mean1 = np.mean(aggregate_calculations.get_psis(cb1))
     mean2 = np.mean(aggregate_calculations.get_psis(cb2))
     assert not np.isclose(mean1, mean2, rtol=1e-6)
 
-    # call ranking function to ensure it runs without error
-    ranked = aggregate_calculations.rank_cbs_by_psi([cb1, cb2])
-    assert np.isclose(np.mean(ranked[0][1]), mean1, rtol=1e-6)
-    assert np.isclose(np.mean(ranked[1][1]), mean2, rtol=1e-6)
+    # call ranking function to make sure it runs without errors
+    ranked = aggregate_calculations.rank_cbs_by_psi(dummy_dict)
+
+    # test new tuple structure (location, mean_psi, moe, psis_array
+    # ranked sorted descending to check if values match expected means
+    assert np.isclose(ranked[0][1], max(mean1, mean2), rtol=1e-6)
+    assert np.isclose(ranked[1][1], min(mean1, mean2), rtol=1e-6)
 
 def test_plot_psis():
     cb1 = [
@@ -138,8 +144,10 @@ def test_plot_psis():
         make_dummy_image(277, 284, 290, 260, 0.88, 0.005, 1)
     ]
 
-    aggregate_calculations.plot_psis([cb1, cb2])
-    aggregate_calculations.plot_psis([cb1, cb2])
+    # package into a dict
+    dummy_dict = {"Location 1": cb1, "Location 2": cb2}
+
+    aggregate_calculations.plot_psis(dummy_dict)
 
 
 def test_plot_severities():
@@ -155,8 +163,11 @@ def test_plot_severities():
         make_dummy_image(277, 284, 290, 260, 0.88, 0.005, 1)
     ]
 
-    aggregate_calculations.plot_severities([cb1, cb2])
-    aggregate_calculations.plot_severities([cb1, cb2], False)
+    # package into a dict
+    dummy_dict = {"Location 1": cb1, "Location 2": cb2}
+
+    aggregate_calculations.plot_severities(dummy_dict)
+    aggregate_calculations.plot_severities(dummy_dict, False)
 
 
 def test_psis_to_severity():
@@ -186,7 +197,10 @@ def test_plot_frsis():
         make_dummy_image(277, 284, 290, 260, 0.88, 0.005, 1)
     ]
 
-    aggregate_calculations.plot_frsis([cb1, cb2])
+    # package into a dict
+    dummy_dict = {"Location 1": cb1, "Location 2": cb2}
+
+    aggregate_calculations.plot_frsis(dummy_dict)
 
 def main():
     test_plot_psis_multiple_images()
