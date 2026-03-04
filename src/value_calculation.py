@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.constants import g, sigma
 
+#FIXME: do we want to add errors for incorrect values?
+
 def calc_sensitivity(ext_sfc_temp: dict[float, float]) -> float: 
     """
     Calculate the cold bridge's sensitivity to outside temperature changes based on the given external temperatures and surface temperatures.
@@ -127,3 +129,21 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     psi = qtb / (int_amb - ext)
 
     return float(psi)
+
+def calc_pixel_length(camera: str, distance: float = 2.0) -> float:
+    camera_profiles = {
+        "FLIR E40bx": {"fov": 25.0, "res": 320},
+        "HIKMICRO M11W": {"fov": 37.2, "res": 640}
+    }
+
+    if camera not in camera_profiles:
+        raise ValueError(f"Unsupported camera type: '{camera}'. Please select from: {list(camera_profiles.keys())}")
+
+
+    horizontal_fov = camera_profiles[camera]["fov"]
+    horizontal_res = camera_profiles[camera]["res"]
+    
+    # slight change from toby's maths (that assumes wall curves around camera, not a plane)
+    pixel_size = (2 * distance * np.tan(np.deg2rad(horizontal_fov / 2))) / horizontal_res
+
+    return pixel_size
