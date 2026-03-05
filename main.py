@@ -77,7 +77,7 @@ def analyse_images(
     plot_severities(location_dict)
     plot_frsis(location_dict)
 
-    plot_urls = ["/plots/sensitivity.jpeg", "/plots/severities.p", "/plots/frsis.png"]
+    plot_urls = ["/plots/sensitivity.jpeg", "/plots/severities.jpeg", "/plots/frsis.jpeg"]
 
 
     return {
