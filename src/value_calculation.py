@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.constants import g, sigma
 
+#FIXME: do we want to add errors for incorrect values?
+
 def calc_sensitivity(ext_sfc_temp: dict[float, float]) -> float: 
     """
     Calculate the cold bridge's sensitivity to outside temperature changes based on the given external temperatures and surface temperatures.
@@ -47,7 +49,7 @@ def calc_frsi(int_sfc_temp: float, int_amb_temp: float, ext_temp: float) -> floa
     
     return frsi
 
-def calc_psi(int_amb: float, ext: float, src: float, pix_temps: np.ndarray, epsilon: float, lx: float, lch: float) -> float:
+def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, epsilon: float, lx: float, lch: float) -> float:
     """
     Calculates the cold bridge's psi-value given internal ambient temperature, external temperature, surrounding radiative temperature (average temperature 
     of surrounding surfaces) and pixel surface temperatures (on cold bridge). 
@@ -56,7 +58,7 @@ def calc_psi(int_amb: float, ext: float, src: float, pix_temps: np.ndarray, epsi
     Parameters:
     int_amb (float): internal ambient temperature
     ext (float): external temperature
-    src (float): surrounding surface temperature
+    t_wall (float): surrounding surface temperature of non-cb wall
     pix_temps (np.ndarray): temperatures of each pixel in cold bridge
     Should be in K.
     epsilon (float): surface emissivity
@@ -81,6 +83,7 @@ def calc_psi(int_amb: float, ext: float, src: float, pix_temps: np.ndarray, epsi
     # use g  and sigma (stephen botzmann) from scipy.constants
 
     # method set out by O'Grady et al
+    #total heat flow for cold bridge (qx)
     # calculate Rayleigh Number for each pixel 
     rax = g * beta * (int_amb - pix_temps) * (lch ** 3) / (nu * alpha)
 
@@ -91,18 +94,30 @@ def calc_psi(int_amb: float, ext: float, src: float, pix_temps: np.ndarray, epsi
     hcx = nux * k / lch
 
     # calculate radiative coefficient for each pixel
-    hrx = epsilon * sigma * (pix_temps + src) * (pix_temps ** 2 + src ** 2)
+    # using int_amb as the surrounfing radiative temperature
+    hrx = epsilon * sigma * (pix_temps + int_amb) * (pix_temps ** 2 + int_amb ** 2)
 
     # calculate total heat flow rate per pixel - seperating into convection and radiation but using same eqn
     qconv = lx * hcx * (int_amb - pix_temps)
-    qrad = lx * hrx * (src - pix_temps)
+    qrad = lx * hrx * (int_amb - pix_temps)
     qx = qconv + qrad
 
     # identify uniform heat flow
-    # SHAKY METHOD!!!!!!!!!
-    # assume edges of image (first and last 10 pixels) are the plain non-cold bridge wall
-    wall_pixels = np.concatenate((qx[:10], qx[-10:]))
-    qxu = np.mean(wall_pixels)
+    # calculate Rayleigh and Nusselt Numbers for the non-cb wall using src
+    rax_u = g * beta * (int_amb - t_wall) * (lch ** 3) / (nu * alpha)
+    nux_u = (0.825 + (0.387 * (rax_u ** (1/6))) / (1 + (0.492 * alpha / nu) ** (9/16)) ** (8/27)) ** 2
+    
+    # calculate convective coefficient for non-cb wall
+    hcx_u = nux_u * k / lch
+    
+    # calculate radiative coefficient for non-cb wall
+    # unaffected wall receives radiation from room (int_amb)
+    hrx_u = epsilon * sigma * (t_wall + int_amb) * (t_wall ** 2 + int_amb ** 2)
+    
+    # calculate uniform baseline heat flow per pixel (qxu)
+    qconv_u = lx * hcx_u * (int_amb - t_wall)
+    qrad_u = lx * hrx_u * (int_amb - t_wall) # this evaluates to 0, as expected for no temp difference
+    qxu = qconv_u + qrad_u 
 
     # calculate thermal bridge heat flow per pixel
     qxtb = qx - qxu
@@ -113,4 +128,22 @@ def calc_psi(int_amb: float, ext: float, src: float, pix_temps: np.ndarray, epsi
     # calculate psi value
     psi = qtb / (int_amb - ext)
 
-    return psi
+    return float(psi)
+
+def calc_pixel_length(camera: str, distance: float = 2.0) -> float:
+    camera_profiles = {
+        "FLIR E40bx": {"fov": 25.0, "res": 320},
+        "HIKMICRO M11W": {"fov": 37.2, "res": 640}
+    }
+
+    if camera not in camera_profiles:
+        raise ValueError(f"Unsupported camera type: '{camera}'. Please select from: {list(camera_profiles.keys())}")
+
+
+    horizontal_fov = camera_profiles[camera]["fov"]
+    horizontal_res = camera_profiles[camera]["res"]
+    
+    # slight change from toby's maths (that assumes wall curves around camera, not a plane)
+    pixel_size = (2 * distance * np.tan(np.deg2rad(horizontal_fov / 2))) / horizontal_res
+
+    return pixel_size
