@@ -131,7 +131,7 @@ def plot_psis(cbs: dict[str, list[Image]], show: bool=False) -> None:
         plt.savefig(f'{GRAPHPATH}psis')
         plt.close()
 
-def plot_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: bool =False) -> None:
+def plot_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: bool =False, bar: bool = True) -> None:
     """
     Plots box plot of containing the severity of each cold bridge in cbs, on a cale from 0 to 10,
     By default, 10 is most severe and 0 being ideal
@@ -152,12 +152,15 @@ def plot_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: 
     plt.ylabel(f"Severity rating (higher {"worse" if high_worse else "better"})")
     plt.xlabel("Location")
 
-    # categorical data so only need a tick at each location
-    plt.xticks(np.arange(len(sevs)), labels=locs)
-    # y tick for each of 0-10 inclusive
-    plt.yticks(np.arange(11))
+    if bar:
+        plt.bar(locs, sevs)
+    else:
+        # categorical data so only need a tick at each location
+        plt.xticks(np.arange(len(sevs)), labels=locs)
+        # y tick for each of 0-10 inclusive
+        plt.yticks(np.arange(11))
 
-    plt.scatter(np.arange(len(sevs)), sevs)
+        plt.scatter(np.arange(len(sevs)), sevs)
 
     if show:
         plt.show()

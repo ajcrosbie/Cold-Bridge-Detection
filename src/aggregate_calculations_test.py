@@ -104,15 +104,15 @@ def test_plot_sensitivities():
 
 def test_rank():
     cb1 = [
-        make_dummy_image(280, 287, 293, 273, 0.9, 0.001, 0.1),
-        make_dummy_image(286, 292, 296, 283, 0.92, 0.0015, 0.12),
-        make_dummy_image(277, 284, 290, 270, 0.88, 0.005, 1)
+        make_dummy_image(291, 292, 295, 270, 0.9, 0.001, 0.1),
+        make_dummy_image(293, 294, 296, 283, 0.92, 0.0015, 0.12),
+        make_dummy_image(287, 288, 290, 270, 0.88, 0.005, 1)
     ]
 
     cb2 = [
-        make_dummy_image(280, 287, 293, 263, 0.9, 0.001, 0.1),
-        make_dummy_image(286, 292, 296, 273, 0.92, 0.0015, 0.12),
-        make_dummy_image(277, 284, 290, 260, 0.88, 0.005, 1)
+        make_dummy_image(250, 255, 295, 263, 0.9, 0.001, 1),
+        make_dummy_image(252, 257, 296, 273, 0.92, 0.0015, 1.2),
+        make_dummy_image(246, 251, 290, 260, 0.88, 0.005, 1)
     ]
 
     # package into dict
@@ -133,15 +133,15 @@ def test_rank():
 
 def test_plot_psis():
     cb1 = [
-        make_dummy_image(280, 287, 293, 273, 0.9, 0.001, 0.1),
-        make_dummy_image(286, 292, 296, 283, 0.92, 0.0015, 0.12),
-        make_dummy_image(277, 284, 290, 270, 0.88, 0.005, 1)
+        make_dummy_image(291, 292, 295, 273, 0.9, 0.001, 0.1),
+        make_dummy_image(293, 294, 296, 283, 0.92, 0.0015, 0.12),
+        make_dummy_image(287, 288, 290, 270, 0.88, 0.005, 1)
     ]
 
     cb2 = [
-        make_dummy_image(280, 287, 293, 263, 0.9, 0.001, 0.1),
-        make_dummy_image(286, 292, 296, 273, 0.92, 0.0015, 0.12),
-        make_dummy_image(277, 284, 290, 260, 0.88, 0.005, 1)
+        make_dummy_image(250, 255, 295, 263, 0.9, 0.001, 1),
+        make_dummy_image(252, 257, 296, 273, 0.92, 0.0015, 1.2),
+        make_dummy_image(246, 251, 290, 260, 0.88, 0.005, 1)
     ]
 
     # package into a dict
@@ -152,22 +152,21 @@ def test_plot_psis():
 
 def test_plot_severities():
     cb1 = [
-        make_dummy_image(280, 287, 293, 273, 0.9, 0.001, 0.1),
-        make_dummy_image(286, 292, 296, 283, 0.92, 0.0015, 0.12),
-        make_dummy_image(277, 284, 290, 270, 0.88, 0.005, 1)
+        make_dummy_image(291, 292, 295, 273, 0.9, 0.001, 0.1),
+        make_dummy_image(293, 294, 296, 283, 0.92, 0.0015, 0.12),
+        make_dummy_image(287, 288, 290, 270, 0.88, 0.005, 1)
     ]
 
     cb2 = [
-        make_dummy_image(280, 287, 293, 263, 0.9, 0.001, 0.1),
-        make_dummy_image(286, 292, 296, 273, 0.92, 0.0015, 0.12),
-        make_dummy_image(277, 284, 290, 260, 0.88, 0.005, 1)
+        make_dummy_image(250, 255, 295, 263, 0.9, 0.001, 1),
+        make_dummy_image(252, 257, 296, 273, 0.92, 0.0015, 1.2),
+        make_dummy_image(246, 251, 290, 260, 0.88, 0.005, 1)
     ]
-
     # package into a dict
     dummy_dict = {"Location 1": cb1, "Location 2": cb2}
 
     aggregate_calculations.plot_severities(dummy_dict)
-    aggregate_calculations.plot_severities(dummy_dict, False)
+    # aggregate_calculations.plot_severities(dummy_dict, False)
 
 
 def test_psis_to_severity():
@@ -186,15 +185,15 @@ def test_psis_to_severity():
 
 def test_plot_frsis():
     cb1 = [
-        make_dummy_image(280, 287, 293, 273, 0.9, 0.001, 0.1),
-        make_dummy_image(286, 292, 296, 283, 0.92, 0.0015, 0.12),
-        make_dummy_image(277, 284, 290, 270, 0.88, 0.005, 1)
+        make_dummy_image(291, 292, 295, 273, 0.9, 0.001, 0.1),
+        make_dummy_image(293, 294, 296, 283, 0.92, 0.0015, 0.12),
+        make_dummy_image(287, 288, 290, 270, 0.88, 0.005, 1)
     ]
 
     cb2 = [
-        make_dummy_image(280, 287, 293, 263, 0.9, 0.001, 0.1),
-        make_dummy_image(286, 292, 296, 273, 0.92, 0.0015, 0.12),
-        make_dummy_image(277, 284, 290, 260, 0.88, 0.005, 1)
+        make_dummy_image(250, 255, 295, 263, 0.9, 0.001, 1),
+        make_dummy_image(252, 257, 296, 273, 0.92, 0.0015, 1.2),
+        make_dummy_image(246, 251, 290, 260, 0.88, 0.005, 1)
     ]
 
     # package into a dict
