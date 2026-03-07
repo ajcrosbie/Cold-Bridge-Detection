@@ -12,13 +12,69 @@
         <h1>Cold Bridge Detector</h1>
 
         <div id="uploadSection">
+            <div class="instructions-card">
+                <h2>Before you upload</h2>
+                <ul class="instructions-list">
+                    <li>Stand roughly 2m away from the wall when taking the thermal photo.</li>
+                    <li>Keep the camera as straight-on to the wall as possible.</li>
+                    <li>Try to include the full wall section you want analysed.</li>
+                    <li>Avoid blurry shots, reflective surfaces, and mixed indoor/outdoor framing.</li>
+                    <li>You can upload multiple photos at once, or a ZIP file containing multiple thermal images.</li>
+                </ul>
+            </div>
+
+            <div class="advanced-option-card">
+                <label class="checkbox-row" for="showAdvancedInfoCheckbox">
+                    <input type="checkbox" id="showAdvancedInfoCheckbox">
+                    <span>Show advanced information for all images</span>
+                </label>
+                <p class="checkbox-help">Turn this on if you want the expert-level analysis section included in the results.</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="field-group">
+                    <label for="internalTempInput">Internal temperature (°C)</label>
+                    <input type="number" id="internalTempInput" step="0.1" placeholder="e.g. 20.5">
+                    <div class="field-error" id="internalTempError"></div>
+                </div>
+
+                <div class="field-group">
+                    <label for="externalTempInput">External temperature (°C)</label>
+                    <input type="number" id="externalTempInput" step="0.1" placeholder="e.g. 6.2">
+                    <div class="field-error" id="externalTempError"></div>
+                </div>
+
+                <div class="field-group">
+                    <label for="wallWidthInput">Wall width (m)</label>
+                    <input type="number" id="wallWidthInput" step="0.1" placeholder="e.g. 3.6">
+                    <div class="field-error" id="wallWidthError"></div>
+                </div>
+
+                <div class="field-group">
+                    <label for="wallHeightInput">Wall height (m)</label>
+                    <input type="number" id="wallHeightInput" step="0.1" placeholder="e.g. 2.4">
+                    <div class="field-error" id="wallHeightError"></div>
+                </div>
+            </div>
+
             <div class="upload-container" id="dropZone">
                 <div class="upload-icon">[+]</div>
-                <p>bang a picture in here</p>
-                <input type="file" id="fileInput" accept="image/jpeg, image/png, image/tiff">
+                <p>bang pictures in here</p>
+                <p class="upload-subtext">JPEG, PNG, TIFF, or ZIP with images inside</p>
+                <input type="file" id="fileInput" accept="image/jpeg, image/png, image/tiff, image/tif, .zip" multiple>
                 <span id="fileLabel"></span>
+                <div class="field-error field-error-center" id="fileError"></div>
             </div>
-            <button id="submitBtn" class="btn btn-primary" disabled>Analyse Image</button>
+
+            <div id="selectedFilesSection" class="selected-files-section hidden">
+                <div class="selected-files-header">
+                    <h3>Selected images</h3>
+                    <p>Give every image a name or location before analysing.</p>
+                </div>
+                <div id="selectedFilesList" class="selected-files-list"></div>
+            </div>
+
+            <button id="submitBtn" class="btn btn-primary" disabled>Analyse Images</button>
         </div>
 
 
@@ -27,33 +83,49 @@
                 <h2 id="mainResultText">Analysis Complete</h2>
             </div>
 
-            <div class="image-preview-container">
-                <p style="margin-bottom: 10px; color: var(--secondary-color);">Analysed Image:</p>
-                <div id="imageWrapper" style="position: relative; display: inline-block;">
-                    <img id="resultImagePreview" src="" alt="Analysed Thermal Image">
-                    <div id="circleOverlay"></div>
+            <h3>General Findings</h3>
+            <div class="stats-grid" id="generalStatsGrid"></div>
+
+            <div class="graph-card">
+                <div class="graph-header">
+                    <h3 id="graphTitle">Graph output</h3>
+                    <p id="graphSubtitle">This area will plot whatever title and data points the API sends back.</p>
+                </div>
+                <div class="graph-placeholder" id="graphPlaceholder">
+                    Waiting for API graph data.
+                </div>
+                <div class="graph-wrapper hidden" id="graphWrapper">
+                    <canvas id="apiGraphCanvas"></canvas>
                 </div>
             </div>
 
-            <h3>General Findings</h3>
-            <div class="stats-grid" id="generalStatsGrid">
+            <div class="advanced-results-section hidden" id="advancedResultsSection">
+                <div class="section-heading-row">
+                    <h3>Advanced information for all images</h3>
+                    <p>Expert-level data across the full uploaded set.</p>
                 </div>
-
-            <button id="toggleTechStatsBtn" class="btn btn-secondary">Show Technical Stats v</button>
-            
-            <div id="techStatsContainer" class="tech-stats-container">
                 <div class="stats-grid" id="techStatsGrid"></div>
             </div>
 
-            <button id="resetBtn" class="btn btn-primary" style="margin-top: 30px;">Analyse Another Image</button>
+            <div class="analysed-images-section">
+                <div class="section-heading-row">
+                    <h3>Analysed Images</h3>
+                    <p>Each image keeps its own name/location, result summary, and marked bridge areas.</p>
+                </div>
+                <div id="analysedImagesList" class="analysed-images-list"></div>
+            </div>
+
+            <button id="resetBtn" class="btn btn-primary" style="margin-top: 30px;">Analyse Another Set</button>
         </div>
     </div>
 
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
-        <p>Analysing...</p>
+        <p id="loadingText">Analysing...</p>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
