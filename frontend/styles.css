@@ -493,6 +493,7 @@ h2, h3, h4 {
     pointer-events: none;
 }
 
+
 .cold-bridge-circle {
     position: absolute;
     border: 3px solid var(--danger-color);
