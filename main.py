@@ -25,7 +25,7 @@ def analyse_images(
 ):
     """
     Accept multiple image files, a location name per image, and payload parameters.
-    Returns a dictionary mapping location names to lists of Image objects.
+    Returns a dictionary containing data to be used by the frontend
     """
 
     # Validate lengths
