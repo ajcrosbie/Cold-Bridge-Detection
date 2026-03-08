@@ -58,7 +58,7 @@ def get_psis(images: list[Image]) -> np.ndarray:
     
     return psis
 
-def plot_sensitivies(images: list[Image], location: str = "", show: bool =False) -> float:
+def plot_sensitivities(images: list[Image], location: str = "", show: bool =False) -> float:
     """
     Plots sensitivity to external temperature and returns
     
