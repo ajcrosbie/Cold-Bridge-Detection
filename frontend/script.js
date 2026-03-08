@@ -765,10 +765,6 @@ const renderAnalysedImages = (images) => {
                     <div class="stat-value">${image.averageSurfaceTemp}</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Affected Area</div>
-                    <div class="stat-value">${image.affectedArea}</div>
-                </div>
-                <div class="stat-card">
                     <div class="stat-label">Error Margin</div>
                     <div class="stat-value">${image.errorMargin}</div>
                 </div>
@@ -804,7 +800,6 @@ const createMockAnalysisResponse = () => {
     const firstImage = currentThermalImages[0] || {}
     const internalTemp = Number(firstImage.internalTemp) || 20
     const externalTemp = Number(firstImage.externalTemp) || 5
-    const wallArea = 10 // Mock wall area since we removed global width
     const deltaT = Math.abs(internalTemp - externalTemp)
 
     // this array will hold all the per-image results
@@ -819,8 +814,6 @@ const createMockAnalysisResponse = () => {
         const lowestTemp = Number((internalTemp - (deltaT * 0.35) - (index * 0.7) - 1.8).toFixed(1))
         // making a pretend average surface temp
         const averageSurfaceTemp = Number((internalTemp - (deltaT * 0.18) - (index * 0.3)).toFixed(1))
-        // making a pretend affected area percentage
-        const affectedAreaPercent = Number((8 + (index * 3.4) + Math.min(deltaT * 0.45, 9)).toFixed(1))
         // making a pretend error margin
         const errorMargin = Number((0.4 + (index * 0.08)).toFixed(2))
         // making a pretend psi value
@@ -839,7 +832,6 @@ const createMockAnalysisResponse = () => {
             severityIndex,
             lowestTemp: `${lowestTemp.toFixed(1)}°C`,
             averageSurfaceTemp: `${averageSurfaceTemp.toFixed(1)}°C`,
-            affectedArea: `${affectedAreaPercent.toFixed(1)}%`,
             errorMargin: `±${errorMargin.toFixed(2)}°C`,
             psiValue: `${psiValue.toFixed(2)} W/mK`,
             uValue: `${uValue.toFixed(2)} W/m²K`,
@@ -854,12 +846,10 @@ const createMockAnalysisResponse = () => {
     // working out a few global result numbers from all the images
     const lowestTempFound = Math.min(...analysedImages.map(image => Number(image.lowestTemp.replace('°C', ''))))
     const averageSurfaceTempOverall = analysedImages.reduce((sum, image) => sum + Number(image.averageSurfaceTemp.replace('°C', '')), 0) / analysedImages.length
-    const averageAffectedArea = analysedImages.reduce((sum, image) => sum + Number(image.affectedArea.replace('%', '')), 0) / analysedImages.length
     const averageSeverity = analysedImages.reduce((sum, image) => sum + image.severityIndex, 0) / analysedImages.length
     const averagePsi = analysedImages.reduce((sum, image) => sum + Number(image.psiValue.replace(' W/mK', '')), 0) / analysedImages.length
     const averageU = analysedImages.reduce((sum, image) => sum + Number(image.uValue.replace(' W/m²K', '')), 0) / analysedImages.length
     const averageErrorMargin = analysedImages.reduce((sum, image) => sum + Number(image.errorMargin.replace('±', '').replace('°C', '')), 0) / analysedImages.length
-    const affectedWallArea = wallArea * (averageAffectedArea / 100)
 
     // building the overall response object the rest of the ui expects
     return {
@@ -869,8 +859,6 @@ const createMockAnalysisResponse = () => {
             { label: 'Images Analysed', value: `${analysedImages.length}` },
             { label: 'Lowest Temp Found', value: `${lowestTempFound.toFixed(1)}°C` },
             { label: 'Average Surface Temp', value: `${averageSurfaceTempOverall.toFixed(1)}°C` },
-            { label: 'Affected Wall Area', value: `${affectedWallArea.toFixed(2)} m²` },
-            { label: 'Wall Size Entered', value: `${wallArea.toFixed(2)} m²` },
             { label: 'Internal vs External ΔT', value: `${deltaT.toFixed(1)}°C` }
         ],
         technicalStats: [
