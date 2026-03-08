@@ -22,6 +22,11 @@ BOTTOM_BOX_FLIR = Box(215, 235, 274, 314)
 AVERAGE_BOX_FLIR = Box(4, 25, 4, 69)
 LOGO_BOX_FLIR = Box(219, 235, 4, 56)
 
+BAR_BOX_HIKMICRO = Box(182, 379, 11, 25)
+TOP_BOX_HIKMICRO = Box(139, 172, 9, 94)
+BOTTOM_BOX_HIKMICRO = Box(389, 422, 9, 94)
+MENU_BOX_HIKMICRO = Box(412, 459, 542, 629)
+
 
 #TODO: Set this using master functionz
 FLIR = True
@@ -31,8 +36,10 @@ if FLIR:
     BOTTOM_BOX = BOTTOM_BOX_FLIR
     BAR_BOX = BAR_BOX_FLIR
 else:
-    #TODO: POPULATE
-    pass
+    # assuming we're only adding Hikmicro
+    TOP_BOX = TOP_BOX_HIKMICRO
+    BOTTOM_BOX = BOTTOM_BOX_HIKMICRO
+    BAR_BOX = BAR_BOX_HIKMICRO
 
 
     
