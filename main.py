@@ -2,7 +2,7 @@ from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
 from PIL import Image as PILImage
 from src.image import Image
-from aggregate_calculations import *
+from src.aggregate_calculations import *
 import os
 
 app = FastAPI()
@@ -42,14 +42,14 @@ def analyse_images(
 
         # Create Image object
         img_obj = Image(
-            image=pil_image,
-            cb_pix=None,
-            sf_pix=None,
-            int_amb_temp=int_amb_temps[idx],
-            ext_temp=ext_temps[idx],
-            emissivity=emissivities[idx],
-            pixel_length=pixel_lengths[idx],
-            wall_height=wall_heights[idx]
+            pil_image,
+            None,
+            None,
+            int_amb_temps[idx],
+            ext_temps[idx],
+            emissivities[idx],
+            pixel_lengths[idx],
+            wall_heights[idx]
         )
 
         # Append to location list
