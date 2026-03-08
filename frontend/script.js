@@ -247,7 +247,7 @@ const renderSelectedFiles = () => {
             </div>
             <div class="selected-file-input-wrap">
                 <label for="name-${image.id}">Image name / location</label>
-                <input type="text" id="name-${image.id}" class="selected-file-input ${image.hasNameError ? 'input-invalid' : ''}" placeholder="e.g. Front bedroom left wall" value="${image.locationName}">
+                <input type="text" id="name-${image.id}" class="selected-file-input ${image.hasNameError ? 'input-invalid' : ''}" placeholder="e.g. Front bedroom left wall" value="${image.locationName}"> 
                 <div class="field-error">${image.hasNameError ? 'You must name this image before submitting.' : ''}</div>
             </div>
             <button class="remove-file-btn" data-image-id="${image.id}" type="button">Remove</button>
@@ -312,7 +312,7 @@ const removeImageById = (imageId) => {
 
 
 // this turns a file into the object shape our app wants
-const buildImageObject = (file, sourceLabel = 'Uploaded directly') => {
+const buildImageObject = (file, sourceLabel = 'Uploaded directly', locationName = '') => {
 
 
     // returning our standard shape for each image
@@ -320,7 +320,7 @@ const buildImageObject = (file, sourceLabel = 'Uploaded directly') => {
         id: makeImageId(),
         file,
         previewUrl: URL.createObjectURL(file),
-        locationName: '',
+        locationName: locationName, // pre-fills if they give folder name
         hasNameError: false,
         sourceLabel
     }
@@ -360,11 +360,16 @@ const extractImagesFromZip = async (zipFile) => {
         // keeping only the actual file name without all the zip folder guff
         const cleanName = entry.name.split('/').pop()
 
+        // split the path and get the parent folder's name if it exists
+        const pathParts = entry.name.split('/')
+        // if it's inside a folder, get the folder name, if loose in the zip, call it "Unlabelled"
+        const folderName = pathParts.length > 1 ? pathParts[pathParts.length - 2] : ''
+
         // making a real file object out of the blob so the rest of the app can use it normally
         const extractedFile = new File([blob], cleanName, { type: mimeType || blob.type || 'application/octet-stream' })
 
         // pushing the processed image into our output array
-        extractedImages.push(buildImageObject(extractedFile, `Extracted from ${zipFile.name}`))
+        extractedImages.push(buildImageObject(extractedFile, `Extracted from ${zipFile.name}`, folderName))
     }
 
     // sending back whatever images we found
@@ -422,6 +427,7 @@ const handleFiles = async (files) => {
 
             // if it reaches here then it is not something we accept
             invalidFiles.push(file.name)
+            
         }
 
         // deduping by name + size + lastModified so we dont stack accidental doubles forever
@@ -444,7 +450,7 @@ const handleFiles = async (files) => {
 
         // if anything was invalid we show that in red without nuking the valid files
         if (invalidFiles.length > 0) {
-            showFileError(`Only JPEG, PNG, TIFF, or ZIP files containing those image types are allowed. Problem files: ${invalidFiles.join(', ')}`)
+            showFileError(`Only ZIP files containing those image types are allowed. Problem files: ${invalidFiles.join(', ')}`)
         }
 
     } catch (error) {
