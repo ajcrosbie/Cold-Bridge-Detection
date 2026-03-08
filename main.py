@@ -1,3 +1,4 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
 from PIL import Image as PILImage
@@ -6,6 +7,15 @@ from src.aggregate_calculations import *
 import os
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],       # Allow all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],       # Allow all headers
+)
+
 
 # Plots directory
 PLOT_DIR = "plots"
@@ -20,8 +30,8 @@ def analyse_images(
     int_amb_temps: list[float] = Form(...),
     ext_temps: list[float] = Form(...),
     emissivities: list[float] = Form(...),
-    pixel_lengths: list[float] = Form(...),
-    wall_heights: list[float] = Form(...)
+    wall_heights: list[float] = Form(...),
+    camera_type: str = Form(...)
 ):
     """
     Accept multiple image files, a location name per image, and payload parameters.
@@ -30,7 +40,7 @@ def analyse_images(
 
     # Validate lengths
     if not (len(files) == len(locations) == len(int_amb_temps) == len(ext_temps) == len(emissivities)
-            == len(pixel_lengths) == len(wall_heights)):
+            == len(wall_heights)):
         return {"error": "Mismatch between number of files, locations, and payload parameters"}
 
     # Dictionary mapping location -> list of Image objects
@@ -48,7 +58,7 @@ def analyse_images(
             int_amb_temps[idx],
             ext_temps[idx],
             emissivities[idx],
-            pixel_lengths[idx],
+            None,
             wall_heights[idx]
         )
 
