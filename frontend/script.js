@@ -22,14 +22,6 @@ const GraphWrapper = document.getElementById('graphWrapper')
 const ApiGraphCanvas = document.getElementById('apiGraphCanvas')
 const AdvancedResultsSection = document.getElementById('advancedResultsSection')
 const ShowAdvancedInfoCheckbox = document.getElementById('showAdvancedInfoCheckbox')
-const InternalTempInput = document.getElementById('internalTempInput')
-const ExternalTempInput = document.getElementById('externalTempInput')
-const WallWidthInput = document.getElementById('wallWidthInput')
-const WallHeightInput = document.getElementById('wallHeightInput')
-const InternalTempError = document.getElementById('internalTempError')
-const ExternalTempError = document.getElementById('externalTempError')
-const WallWidthError = document.getElementById('wallWidthError')
-const WallHeightError = document.getElementById('wallHeightError')
 
 
 //yare yare dazes
@@ -152,16 +144,6 @@ const clearValidationErrors = () => {
     FileError.textContent = ''
     DropZone.classList.remove('field-invalid')
 
-    // clearing the normal form field errors
-    ;[
-        { input: InternalTempInput, error: InternalTempError },
-        { input: ExternalTempInput, error: ExternalTempError },
-        { input: WallWidthInput, error: WallWidthError },
-        { input: WallHeightInput, error: WallHeightError }
-    ].forEach(field => {
-        field.input.classList.remove('input-invalid')
-        field.error.textContent = ''
-    })
 
     // clearing every image card error as well
     currentThermalImages.forEach(image => {
@@ -247,14 +229,36 @@ const renderSelectedFiles = () => {
             </div>
             <div class="selected-file-input-wrap">
                 <label for="name-${image.id}">Image name / location</label>
-                <input type="text" id="name-${image.id}" class="selected-file-input ${image.hasNameError ? 'input-invalid' : ''}" placeholder="e.g. Front bedroom left wall" value="${image.locationName}"> 
+                <input type="text" id="name-${image.id}" class="selected-file-input ${image.hasNameError ? 'input-invalid' : ''}" placeholder="e.g. Front bedroom left wall" value="${image.locationName}">
                 <div class="field-error">${image.hasNameError ? 'You must name this image before submitting.' : ''}</div>
-            </div>
+
+                <label for="inttemp-${image.id}">Internal Temp (°C)</label>
+                <input type="number" id="inttemp-${image.id}" class="selected-file-input ${image.hasInternalTempError ? 'input-invalid' : ''}" placeholder="e.g. 20" value="${image.internalTemp}" step="0.1">
+                <div class="field-error">${image.hasInternalTempError ? 'Internal temperature required.' : ''}</div>
+            
+                <label for="exttemp-${image.id}">External Temp (°C)</label>
+                <input type="number" id="exttemp-${image.id}" class="selected-file-input ${image.hasExternalTempError ? 'input-invalid' : ''}" placeholder="e.g. 5" value="${image.externalTemp}" step="0.1">
+                <div class="field-error">${image.hasExternalTempError ? 'External temperature required.' : ''}</div>
+            
+                <label for="wallheight-${image.id}">Wall Height (m)</label>
+                <input type="number" id="wallheight-${image.id}" class="selected-file-input ${image.hasWallHeightError ? 'input-invalid' : ''}" placeholder="e.g. 2.5" value="${image.wallHeight}" step="0.1">
+                <div class="field-error">${image.hasWallHeightError ? 'Wall height required.' : ''}</div>
+
+                <label for="camtype-${image.id}">Camera Type</label>
+                <select id="camtype-${image.id}" class="selected-file-input">
+                    <option value="FLIR E40bx" ${image.cameraType === 'FLIR E40bx' ? 'selected' : ''}>FLIR E40bx</option>
+                    <option value="HIKMICRO M11W" ${image.cameraType === 'HIKMICRO M11W' ? 'selected' : ''}>HIKMICRO M11W</option>
+                </select>
+                </div>
             <button class="remove-file-btn" data-image-id="${image.id}" type="button">Remove</button>
         `
 
         // grabbing the input so we can keep the name synced to state
         const nameInput = card.querySelector('.selected-file-input')
+        const internalTempInput = card.querySelector(`#inttemp-${image.id}`)
+        const externalTempInput = card.querySelector(`#exttemp-${image.id}`)
+        const wallHeightInput = card.querySelector(`#wallheight-${image.id}`)
+        const cameraTypeInput = card.querySelector(`#camtype-${image.id}`)
         // grabbing the remove button so they can bin a bad image
         const removeBtn = card.querySelector('.remove-file-btn')
 
@@ -271,6 +275,46 @@ const renderSelectedFiles = () => {
                 const localError = card.querySelector('.field-error')
                 localError.textContent = ''
             }
+        })
+
+        // listening for changes to the internal temp input
+        internalTempInput.addEventListener('input', (e) => {
+            image.internalTemp = e.target.value
+
+            // can clear the error if non-empty
+            if (e.target.value.trim() !== '') {
+                image.hasInternalTempError = false
+                internalTempInput.classList.remove('input-invalid')
+                internalTempInput.parentElement.querySelector('.field-error').textContent = ''
+            }
+        })
+
+        // listening for changes to the external temp input
+        externalTempInput.addEventListener('input', (e) => {
+            image.externalTemp = e.target.value
+
+            // can clear error if non-empty
+            if (e.target.value.trim() !== '') {
+                image.hasExternalTempError = false
+                externalTempInput.classList.remove('input-invalid')
+                externalTempInput.parentElement.querySelector('.field-error').textContent = ''
+            }
+        })
+
+        // listening for changes to the wall height input
+        wallHeightInput.addEventListener('input', (e) => {
+            image.wallHeight = e.target.value
+
+            // can clear error if non-empty
+            if (e.target.value.trim() !== '') {
+                image.hasWallHeightError = false
+                wallHeightInput.classList.remove('input-invalid')
+                wallHeightInput.parentElement.querySelector('.field-error').textContent = ''
+            }
+        })
+
+        cameraTypeInput.addEventListener('change', (e) => {
+            image.cameraType = e.target.value
         })
 
         // listening for the remove button
@@ -322,6 +366,14 @@ const buildImageObject = (file, sourceLabel = 'Uploaded directly', locationName 
         previewUrl: URL.createObjectURL(file),
         locationName: locationName, // pre-fills if they give folder name
         hasNameError: false,
+        internalTemp: '',
+        hasInternalTempError: false,
+        externalTemp: '',
+        hasExternalTempError: false,
+        wallHeight: '',
+        hasWallHeightError: false,
+        cameraType: 'FLIR E40bx', // default value
+        distance: 2.0,
         sourceLabel
     }
 }
@@ -486,58 +538,38 @@ const validateForm = () => {
         isValid = false
     }
 
-    // checking internal temp
-    if (InternalTempInput.value.trim() === '') {
-        showInputError(InternalTempInput, InternalTempError, 'You must enter the internal temperature.')
-        isValid = false
-    }
-
-    // checking external temp
-    if (ExternalTempInput.value.trim() === '') {
-        showInputError(ExternalTempInput, ExternalTempError, 'You must enter the external temperature.')
-        isValid = false
-    }
-
-    // checking wall width
-    if (WallWidthInput.value.trim() === '') {
-        showInputError(WallWidthInput, WallWidthError, 'You must enter the wall width.')
-        isValid = false
-    }
-
-    // checking wall height
-    if (WallHeightInput.value.trim() === '') {
-        showInputError(WallHeightInput, WallHeightError, 'You must enter the wall height.')
-        isValid = false
-    }
-
-    // checking internal temp is actually a number
-    if (InternalTempInput.value.trim() !== '' && Number.isNaN(Number(InternalTempInput.value))) {
-        showInputError(InternalTempInput, InternalTempError, 'Internal temperature must be a number.')
-        isValid = false
-    }
-
-    // checking external temp is actually a number
-    if (ExternalTempInput.value.trim() !== '' && Number.isNaN(Number(ExternalTempInput.value))) {
-        showInputError(ExternalTempInput, ExternalTempError, 'External temperature must be a number.')
-        isValid = false
-    }
-
-    // checking wall width is actually a number above 0
-    if (WallWidthInput.value.trim() !== '' && (Number.isNaN(Number(WallWidthInput.value)) || Number(WallWidthInput.value) <= 0)) {
-        showInputError(WallWidthInput, WallWidthError, 'Wall width must be a number greater than 0.')
-        isValid = false
-    }
-
-    // checking wall height is actually a number above 0
-    if (WallHeightInput.value.trim() !== '' && (Number.isNaN(Number(WallHeightInput.value)) || Number(WallHeightInput.value) <= 0)) {
-        showInputError(WallHeightInput, WallHeightError, 'Wall height must be a number greater than 0.')
-        isValid = false
-    }
-
-    // making sure every image has a name/location attached to it
+    // validating each image
     currentThermalImages.forEach(image => {
+        // checking every image has a name/location attached to it
         if (!image.locationName.trim()) {
             image.hasNameError = true
+            isValid = false
+        }
+
+        // checking internal temp for each image
+        if (image.internalTemp.trim() === '') {
+            image.hasInternalTempError = true
+            isValid = false
+        } else if (Number.isNaN(Number(image.internalTemp))) {
+            image.hasInternalTempError = true
+            isValid = false
+        }
+
+        // checking external temp for each image
+        if (image.externalTemp.trim() === '') {
+            image.hasExternalTempError = true
+            isValid = false
+        } else if (Number.isNaN(Number(image.externalTemp))) {
+            image.hasExternalTempError = true
+            isValid = false
+        }
+
+        // checking wall height for each image
+        if (image.wallHeight.trim() === '') {
+            image.hasWallHeightError = true
+            isValid = false
+        } else if (Number.isNaN(Number(image.wallHeight)) || Number(image.wallHeight) <= 0) {
+            image.hasWallHeightError = true
             isValid = false
         }
     })
@@ -768,12 +800,11 @@ const renderAnalysedImages = (images) => {
 const createMockAnalysisResponse = () => {
 
 
-    // grabbing the wall measurements and temperatures from the form
-    const internalTemp = Number(InternalTempInput.value)
-    const externalTemp = Number(ExternalTempInput.value)
-    const wallWidth = Number(WallWidthInput.value)
-    const wallHeight = Number(WallHeightInput.value)
-    const wallArea = wallWidth * wallHeight
+    // grab the temperatures from the very first image card to use for our mock math
+    const firstImage = currentThermalImages[0] || {}
+    const internalTemp = Number(firstImage.internalTemp) || 20
+    const externalTemp = Number(firstImage.externalTemp) || 5
+    const wallArea = 10 // Mock wall area since we removed global width
     const deltaT = Math.abs(internalTemp - externalTemp)
 
     // this array will hold all the per-image results
@@ -872,6 +903,29 @@ const sendImagesForAnalysis = () => {
     })
 }
 
+// this collects per-image analysis data for the backend
+const collectAnalysisData = () => {
+    
+    const locations = currentThermalImages.map(img => img.locationName)
+    const intAmbTemps = currentThermalImages.map(img => Number(img.internalTemp))
+    const extTemps = currentThermalImages.map(img => Number(img.externalTemp))
+    const emissivities = currentThermalImages.map(() => 0.95)  // default value
+    const pixelLengths = currentThermalImages.map(() => 0.001)  // default value
+    const wallHeights = currentThermalImages.map(img => Number(img.wallHeight))
+    const cameraTypes = currentThermalImages.map(img => img.cameraType)
+    const distances = currentThermalImages.map(img => img.distance)
+    
+    return {
+        locations,
+        intAmbTemps,
+        extTemps,
+        emissivities,
+        pixelLengths,
+        wallHeights,
+        cameraTypes,
+        distances
+    }
+}
 
 
 // function to show the results when the backend sends them back
@@ -960,27 +1014,6 @@ DropZone.addEventListener('click', () => FileInput.click())
 // adding an event listener to the invisible file input for when its value changes
 FileInput.addEventListener('change', () => handleFiles(FileInput.files))
 
-// clearing errors live when the main inputs change
-InternalTempInput.addEventListener('input', () => {
-    InternalTempInput.classList.remove('input-invalid')
-    InternalTempError.textContent = ''
-})
-
-ExternalTempInput.addEventListener('input', () => {
-    ExternalTempInput.classList.remove('input-invalid')
-    ExternalTempError.textContent = ''
-})
-
-WallWidthInput.addEventListener('input', () => {
-    WallWidthInput.classList.remove('input-invalid')
-    WallWidthError.textContent = ''
-})
-
-WallHeightInput.addEventListener('input', () => {
-    WallHeightInput.classList.remove('input-invalid')
-    WallHeightError.textContent = ''
-})
-
 // adding an event listener to the reset button
 ResetBtn.addEventListener('click', () => {
 
@@ -995,12 +1028,6 @@ ResetBtn.addEventListener('click', () => {
     FileInput.value = ''
     FileLabel.textContent = ''
     FileError.textContent = ''
-
-    // resetting the normal inputs
-    InternalTempInput.value = ''
-    ExternalTempInput.value = ''
-    WallWidthInput.value = ''
-    WallHeightInput.value = ''
 
     // resetting the advanced checkbox
     ShowAdvancedInfoCheckbox.checked = false
