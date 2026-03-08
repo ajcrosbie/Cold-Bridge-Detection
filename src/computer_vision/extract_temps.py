@@ -28,7 +28,9 @@ BOTTOM_BOX_HIKMICRO = Box(389, 422, 9, 94)
 MENU_BOX_HIKMICRO = Box(412, 459, 542, 629)
 
 
-#TODO: Set this using master functionz
+#TODO: Set this using master function
+
+
 FLIR = True
 
 if FLIR:
@@ -43,21 +45,12 @@ else:
 
 
     
-# TODO: check behaviour of undefined stuff here to include appropriate errors.
-def find_min_max(img: np.ndarray) ->  tuple[float, float]:    
+def find_text_float(img:np.ndarray) ->  float:    
     
-    top = img[TOP_BOX.yt:TOP_BOX.yb,
-              TOP_BOX.xl:TOP_BOX.xr]
-    
-    bottom = img[BOTTOM_BOX.yt:BOTTOM_BOX.yb,
-              BOTTOM_BOX.xl:BOTTOM_BOX.xr]
+    text = pytesseract.image_to_string(img) # This might be crap but I have seen it before
 
-    top_text = pytesseract.image_to_string(top) # This might be crap but I have seen it before
-    bottom_text = pytesseract.image_to_string(bottom)
-
-    t_max = float(top_text.strip().replace("°C", "")) # More processing may be needed here fore more the non flir
-    t_min = float(bottom_text.strip().replace("°C", "")) # More processing may be needed here fore more the non flir
-    return t_min, t_max
+    temp = float(text.strip().replace("°C", "")) # More processing may be needed here fore more the non flir
+    return temp
 
 
 def make_colour_to_temp_map(t_min: float, t_max:float, bar:np.ndarray) -> KNeighborsRegressor:
@@ -90,13 +83,13 @@ def image_to_temperature_map(image_path: PathLike):
 
     h, w, _ = img.shape
 
-    t_min, t_max = 10, 13 #find_min_max(img) TODO:REMOVE THIS PRE PUSH
 
     top = extract_from_box(img, TOP_BOX)
     
     bottom = extract_from_box(img, BOTTOM_BOX)
 
     bar = extract_from_box(img, BAR_BOX)
+    t_min, t_max = find_text_float(bottom), find_text_float(top) 
           
     
     
