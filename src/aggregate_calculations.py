@@ -5,15 +5,17 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 # path to the folder in which any plots will be saved
-GRAPHPATH = "plots/"
+GRAPHPATH = "/plots/"
 
-def plot_psis_single_cb(images: list[Image], show=False) -> None:
+def plot_psis_single_cb(images: list[Image], show=False) -> str:
     """
     Plots psi-value against external temperature using a 
     set of images as datapoints.
     
     :param images: list of Images ideally taken with different external temperatures
     """
+
+    path = f'{GRAPHPATH}singleImgPsi'
     # Kind of useless as should just be a noisy horizontal line
 
     exts = [i.ext for i in images]
@@ -34,10 +36,10 @@ def plot_psis_single_cb(images: list[Image], show=False) -> None:
     if show:
         plt.show()
     else:
-        plt.savefig(f'{GRAPHPATH}singleImgPsi')
+        plt.savefig(path)
         plt.close()
 
-
+    return path
 
 def get_psis(images: list[Image]) -> np.ndarray:
     """
@@ -58,13 +60,16 @@ def get_psis(images: list[Image]) -> np.ndarray:
     
     return psis
 
-def plot_sensitivities(images: list[Image], location: str = "", show: bool =False) -> float:
+def plot_sensitivities(images: list[Image], location: str = "", show: bool =False) -> str:
     """
-    Plots sensitivity to external temperature and returns
+    Plots sensitivity to external temperature and returns path to the image
     
     :param images: Description
     :type images: list[Image]
     """
+
+    path = f"{GRAPHPATH}sensitivity{'_'+location if location else ''}"
+
     # surface temperature of the cold bridge - take to be the mean of all pixel temps
     cb_temps = np.mean([i.get_cb() for i in images], axis=1)
     exts = np.array([i.ext for i in images])
@@ -83,10 +88,10 @@ def plot_sensitivities(images: list[Image], location: str = "", show: bool =Fals
     if show:
         plt.show()
     else:
-        plt.savefig(f"{GRAPHPATH}sensitivity{'_'+location if location else ''}")
+        plt.savefig(path)
         plt.close()
 
-    return sens
+    return path
 
 def rank_cbs_by_psi(cbs: dict[str, list[Image]]) -> list[tuple[str, float, float, np.ndarray]]:
     """
@@ -108,12 +113,14 @@ def rank_cbs_by_psi(cbs: dict[str, list[Image]]) -> list[tuple[str, float, float
     results.sort(key=lambda x: x[1], reverse=True) # descending order
 
     return results
-def plot_psis(cbs: dict[str, list[Image]], show: bool=False) -> None:
+
+def plot_psis(cbs: dict[str, list[Image]], show: bool=False) -> str:
     """   
     Plots a box plot showing psi value for each cold bridge
     
     :param cbs: Array of Image arrays. Each Image array corresponds to one suspected cold bridge
     """
+    path = f'{GRAPHPATH}psis'
 
     ranked = rank_cbs_by_psi(cbs)
     locs = [cb[0] for cb in ranked]
@@ -128,10 +135,12 @@ def plot_psis(cbs: dict[str, list[Image]], show: bool=False) -> None:
     if show:
         plt.show()
     else:
-        plt.savefig(f'{GRAPHPATH}psis')
+        plt.savefig(path)
         plt.close()
 
-def plot_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: bool =False, bar: bool = True) -> None:
+    return path
+
+def plot_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: bool =False, bar: bool = True) -> str:
     """
     Plots box plot of containing the severity of each cold bridge in cbs, on a cale from 0 to 10,
     By default, 10 is most severe and 0 being ideal
@@ -140,7 +149,7 @@ def plot_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: 
     :param high_worse: (boolean) saying if high severity is bad or good
     
     """
-
+    path = f'{GRAPHPATH}severities'
     ranked = rank_cbs_by_psi(cbs)
     locs = [cb[0] for cb in ranked]
 
@@ -165,16 +174,19 @@ def plot_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: 
     if show:
         plt.show()
     else:
-        plt.savefig(f'{GRAPHPATH}severities')
+        
+        plt.savefig(path)
         plt.close()
 
-def plot_frsis(cbs: dict[str, list[Image]], show: bool =False) -> None:
+    return path
+
+def plot_frsis(cbs: dict[str, list[Image]], show: bool =False) -> str:
     """
     Plots box plot of frsi value for each cold bridge in cbs
 
     :param cbs: array of arrays of images corresponding to the same cold bridge
     """
-
+    path =f'{GRAPHPATH}frsis'
     locs = list(cbs.keys())
 
     # calculates frsi for every image in 2d array cbs
@@ -191,9 +203,10 @@ def plot_frsis(cbs: dict[str, list[Image]], show: bool =False) -> None:
     if show:
         plt.show()
     else:
-        plt.savefig(f'{GRAPHPATH}frsis')
+        plt.savefig(path)
         plt.close()
-
+        
+    return path
 
 def psi_to_severity(psi: float, high_worse: bool = True) -> float:
     """
