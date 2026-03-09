@@ -28,4 +28,9 @@ to run the server
 ```
 fastapi run ser/main.py
 ```
-There also needs to be a public webpage that the users can interact with. The contents of this webpage can be found in /frontend
+
+
+There also needs to be a public webpage that the users can interact with. The contents of this webpage can be found in /frontend.
+
+# Challenges
+It is also advised that a full penetration test is completed before actually being deployed to the internet.

@@ -37,25 +37,20 @@ MIN_MAX_BOX_HIKMICRO = Box(7, 89, 8, 125)
 
 HIKMICRO_UI_BOXES = [OUTER_BAR_BOX_HIKMICRO, TOP_BOX_HIKMICRO, BOTTOM_BOX_HIKMICRO, MENU_BOX_HIKMICRO, MIN_MAX_BOX_HIKMICRO]
 
-TOP_BOX = None
-BOTTOM_BOX = None
-INNER_BAR_BOX = None
-UI_BOXES = None
 
-#TODO: Set this using master functionz
-FLIR = True
-
-if FLIR:
-    TOP_BOX = TOP_BOX_FLIR
-    BOTTOM_BOX = BOTTOM_BOX_FLIR
-    INNER_BAR_BOX = INNER_BAR_BOX_FLIR
-    UI_BOXES = FLIR_UI_BOXES
-else:
-    # assuming we're only adding Hikmicro
-    TOP_BOX = TOP_BOX_HIKMICRO
-    BOTTOM_BOX = BOTTOM_BOX_HIKMICRO
-    INNER_BAR_BOX = INNER_BAR_BOX_HIKMICRO
-    UI_BOXES = HIKMICRO_UI_BOXES
+def getBoxes(FLIR):
+    if FLIR:
+        TOP_BOX = TOP_BOX_FLIR
+        BOTTOM_BOX = BOTTOM_BOX_FLIR
+        INNER_BAR_BOX = INNER_BAR_BOX_FLIR
+        UI_BOXES = FLIR_UI_BOXES
+    else:
+        # assuming we're only adding Hikmicro
+        TOP_BOX = TOP_BOX_HIKMICRO
+        BOTTOM_BOX = BOTTOM_BOX_HIKMICRO
+        INNER_BAR_BOX = INNER_BAR_BOX_HIKMICRO
+        UI_BOXES = HIKMICRO_UI_BOXES
+    return TOP_BOX, BOTTOM_BOX, INNER_BAR_BOX, UI_BOXES 
 
 
 
@@ -90,14 +85,14 @@ def extract_from_box(img:np.ndarray, box:Box) -> np.ndarray:
     return img[box.yt:box.yb,
               box.xl:box.xr]
 
-def image_to_temperature_map(image_path: PathLike) -> tuple[np.ndarray, float, float]:
+def image_to_temperature_map(image_path: PathLike, boxes) -> tuple[np.ndarray, float, float]:
 
     img = cv2.imread(image_path)
     if img is None:
         raise ValueError("Image not loaded")
 
     h, w, _ = img.shape
-
+    TOP_BOX, BOTTOM_BOX, INNER_BAR_BOX = boxes
 
     top = extract_from_box(img, TOP_BOX)
     
