@@ -878,17 +878,31 @@ const createMockAnalysisResponse = () => {
 
 
 // this is where we would actually send the data to the backend later
-const sendImagesForAnalysis = () => {
+const sendImagesForAnalysis = async () => {
 
+    const form = new FormData();
 
-    // returning a promise so the submit flow looks like a real api call
-    return new Promise((resolve) => {
+    currentThermalImages.forEach((img) => {
+        form.append('files', img.file);
+        form.append('locations', img.locationName);
+        form.append('int_amb_temps', img.internalTemp);
+        form.append('ext_temps', img.externalTemp);
+        form.append('emissivities', 0.95);
+        form.append('wall_heights', img.wallHeight);
+        form.append('camera_type', img.cameraType);
+    });
 
-        // waiting a little bit so the loading overlay actually appears
-        setTimeout(() => {
-            resolve(createMockAnalysisResponse())
-        }, FAKE_NETWORK_DELAY)
-    })
+    const resp = await fetch('http://localhost:8000/analyse-images/', {
+        method: 'POST',
+        body: form
+    });
+
+    if (!resp.ok) {
+        throw new Error(`API error ${resp.status}`);
+    }
+
+    // assuming the backend returns JSON like { psis: [...], psi_severities: [...], plots: [...] }
+    return await resp.json();
 }
 
 // this collects per-image analysis data for the backend
@@ -1083,6 +1097,8 @@ SubmitBtn.addEventListener('click', async () => {
 
         // waiting for the pretend backend to reply
         const response = await sendImagesForAnalysis()
+
+        console.log(response)
 
         // passing our fake data into the display function so it shows up on screen
         displayResults(response)
