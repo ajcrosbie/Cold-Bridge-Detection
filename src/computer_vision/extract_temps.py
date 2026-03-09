@@ -102,4 +102,4 @@ def image_to_temperature_map(image_path: PathLike):
     temp_img = predicted_temps.reshape(h, w)
 
 
-    return temp_img
+    return temp_img, t_min, t_max
