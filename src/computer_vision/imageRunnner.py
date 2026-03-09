@@ -8,7 +8,7 @@ def run_images(img_paths:list[PathLike]) -> list[tuple[np.ndarray, float]]:
     for i in img_paths:
         timg, tmin, tmax = image_to_temperature_map(i)
         cb = find_bridge(detect_cold_mask(tmin, tmax, timg))
-        l.append(extract_from_box(timg, cb), find_mean(timg, cb))
+        l.append((extract_from_box(timg, cb), find_mean(timg, cb)))
         
     return l
 
