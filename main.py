@@ -11,6 +11,11 @@ from uuid import uuid4
 from src.computer_vision.imageRunnner import run_images
 import numpy as np
 from src.value_calculation import calc_pixel_length
+import logging
+
+logger = logging.getLogger("uvicorn.error")
+logger.setLevel(logging.INFO)
+
 
 app = FastAPI()
 
@@ -46,8 +51,13 @@ def analyse_images(
     Accept multiple image files, a location name per image, and payload parameters.
     Returns a dictionary containing data to be used by the frontend
     """
-    with open("logs.txt", "a") as f:
+    with open("Backendlogs.txt", "a") as f:
         f.write("Request received\n")
+
+    if UPLOAD_DIR.exists():
+        shutil.rmtree(UPLOAD_DIR)
+    UPLOAD_DIR.mkdir(exist_ok=True)
+
     file_paths: list[Path] = []
     
     for file in files:
@@ -114,31 +124,12 @@ def analyse_images(
     psi_severities = [psi_to_severity(psi) for psi in psi_values]
 
     plot_paths = []
-    # generate sensitivity plot for each location, but don't let a single failure abort the whole response
-    for loc, img_list in location_dict.items():
-        try:
-            plot_paths.append(plot_sensitivities(img_list))
-        except Exception as e:
-            print(f"failed to plot sensitivities for {loc}: {e}")
-            plot_paths.append("")
+    for img_list in location_dict.values():
+        plot_paths.append(plot_sensitivities(img_list))
 
-    # overall plots
-    try:
-        plot_paths.append(plot_severities(location_dict))
-    except Exception as e:
-        print(f"failed to plot severities: {e}")
-        plot_paths.append("")
-    try:
-        plot_paths.append(plot_psis(location_dict))
-    except Exception as e:
-        print(f"failed to plot psis: {e}")
-        plot_paths.append("")
-    try:
-        plot_paths.append(plot_frsis(location_dict))
-    except Exception as e:
-        print(f"failed to plot frsis: {e}")
-        plot_paths.append("")
-
+    plot_paths.append(plot_severities(location_dict))
+    plot_paths.append(plot_psis(location_dict))
+    plot_paths.append(plot_frsis(location_dict)) 
 
     print("List lengths equal: " + str(len(psi_lists)==len(psi_severities)==len(error_margins)))
 

@@ -59,7 +59,12 @@ def find_text_float(img:np.ndarray) ->  float:
     
     text = pytesseract.image_to_string(img) # This might be crap but I have seen it before
 
-    temp = float(text.strip().replace("°C", "")) # More processing may be needed here fore more the non flir
+    try:
+        temp = float(text.strip().replace("°C", "")) # More processing may be needed here fore more the non flir
+    except ValueError:
+        # OCR failed or extracted non-numeric text; return a safe default
+        print(f"WARNING: OCR extraction failed, extracted text: '{text}'")
+        temp = 20
     return temp
 
 
