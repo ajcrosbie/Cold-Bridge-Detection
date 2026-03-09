@@ -16,32 +16,47 @@ class Box:
     xr:int # x axis most right
 
 
-BAR_BOX_FLIR = Box(29, 210, 306, 314)
-TOP_BOX_FLIR = Box(5, 25, 274, 314) 
+
+# defining a bunch of constants
+
+INNER_BAR_BOX_FLIR = Box(29, 209, 306, 313)
+OUTER_BAR_BOX_FLIR = Box(26, 213, 303, 317)
+TOP_BOX_FLIR = Box(5, 25, 274, 314)
 BOTTOM_BOX_FLIR = Box(215, 235, 274, 314)
-AVERAGE_BOX_FLIR = Box(4, 25, 4, 69)
+CROSSHAIR_BOX_FLIR = Box(4, 25, 4, 69)
 LOGO_BOX_FLIR = Box(219, 235, 4, 56)
 
-BAR_BOX_HIKMICRO = Box(182, 379, 11, 25)
+FLIR_UI_BOXES = [OUTER_BAR_BOX_FLIR, TOP_BOX_FLIR, BOTTOM_BOX_FLIR, CROSSHAIR_BOX_FLIR, LOGO_BOX_FLIR]
+
+INNER_BAR_BOX_HIKMICRO = Box(182, 379, 11, 25)
+OUTER_BAR_BOX_HIKMICRO = Box(180, 382, 8, 27)
 TOP_BOX_HIKMICRO = Box(139, 172, 9, 94)
 BOTTOM_BOX_HIKMICRO = Box(389, 422, 9, 94)
 MENU_BOX_HIKMICRO = Box(412, 459, 542, 629)
+MIN_MAX_BOX_HIKMICRO = Box(7, 89, 8, 125)
 
+HIKMICRO_UI_BOXES = [OUTER_BAR_BOX_HIKMICRO, TOP_BOX_HIKMICRO, BOTTOM_BOX_HIKMICRO, MENU_BOX_HIKMICRO, MIN_MAX_BOX_HIKMICRO]
 
-#TODO: Set this using master function
+TOP_BOX = None
+BOTTOM_BOX = None
+INNER_BAR_BOX = None
+UI_BOXES = None
 
-
+#TODO: Set this using master functionz
 FLIR = True
 
 if FLIR:
     TOP_BOX = TOP_BOX_FLIR
     BOTTOM_BOX = BOTTOM_BOX_FLIR
-    BAR_BOX = BAR_BOX_FLIR
+    INNER_BAR_BOX = INNER_BAR_BOX_FLIR
+    UI_BOXES = FLIR_UI_BOXES
 else:
     # assuming we're only adding Hikmicro
     TOP_BOX = TOP_BOX_HIKMICRO
     BOTTOM_BOX = BOTTOM_BOX_HIKMICRO
-    BAR_BOX = BAR_BOX_HIKMICRO
+    INNER_BAR_BOX = INNER_BAR_BOX_HIKMICRO
+    UI_BOXES = HIKMICRO_UI_BOXES
+
 
 
     
@@ -71,11 +86,11 @@ def make_colour_to_temp_map(t_min: float, t_max:float, bar:np.ndarray) -> KNeigh
     return knn_model
 
 
-def extract_from_box(img:np.ndarray, box:Box):
+def extract_from_box(img:np.ndarray, box:Box) -> np.ndarray:
     return img[box.yt:box.yb,
               box.xl:box.xr]
 
-def image_to_temperature_map(image_path: PathLike):
+def image_to_temperature_map(image_path: PathLike) -> tuple[np.ndarray, float, float]:
 
     img = cv2.imread(image_path)
     if img is None:
@@ -88,7 +103,7 @@ def image_to_temperature_map(image_path: PathLike):
     
     bottom = extract_from_box(img, BOTTOM_BOX)
 
-    bar = extract_from_box(img, BAR_BOX)
+    bar = extract_from_box(img, INNER_BAR_BOX)
     t_min, t_max = find_text_float(bottom), find_text_float(top) 
           
     

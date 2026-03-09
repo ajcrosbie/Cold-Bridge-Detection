@@ -1,12 +1,10 @@
-from extract_temps import Box
+from extract_temps import *
 import numpy as np
 import cv2
 
 # The expected control flow is that image_to_temperature_map() is called on the image path. 
 # Then the returned temp_img is passed to detect_cold_mask(), and the mask returned.
 # Then the returned mask is passed to find_bridge(), and the Box containing the cold bridge returned.
-
-# IMPORTANT: The mask MUST be cropped and have the UI elements removed before find_bridge() is called.
 
 def clean_mask(mask: np.ndarray) -> np.ndarray:
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7,7))
@@ -28,6 +26,10 @@ def detect_cold_mask(t_min: float, t_max: float, temp_img: np.ndarray) -> np.nda
     for y in range(h):
         for x in range(w):
             mask[y,x] = 255 if temp_img[y,x] < upper_threshold_temp else 0
+
+    # mask away the UI
+    for box in UI_BOXES:
+        cv2.rectangle(mask, (box.xl, box.yt), (box.xr, box.yb), 0, -1)
 
     mask = clean_mask(mask)
     return mask
