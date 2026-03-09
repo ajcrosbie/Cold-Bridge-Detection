@@ -83,15 +83,16 @@ def analyse_images(
     psi_values = get_psis(processed_images)
     psi_severities = [psi_to_severity(psi) for psi in psi_values]
 
-    plot_sensitivities(processed_images)
-    plot_severities(location_dict)
-    plot_frsis(location_dict)
+    plot_paths = []
+    for loc in location_dict.keys():
+        plot_paths.append(plot_sensitivities(processed_images))
 
-    plot_urls = ["/plots/sensitivity.jpeg", "/plots/severities.jpeg", "/plots/frsis.jpeg"]
-
+    plot_paths.append(plot_severities(location_dict))
+    plot_paths.append(psi_plot = plot_psis(location_dict))
+    plot_paths.append(frsis_plot = plot_frsis(location_dict))   
 
     return {
         "psis": psi_values.tolist(),
         "psi_severities": psi_severities,
-        "plots": plot_urls
+        "plots": plot_paths
     }
