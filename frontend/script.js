@@ -22,14 +22,6 @@ const GraphWrapper = document.getElementById('graphWrapper')
 const ApiGraphCanvas = document.getElementById('apiGraphCanvas')
 const AdvancedResultsSection = document.getElementById('advancedResultsSection')
 const ShowAdvancedInfoCheckbox = document.getElementById('showAdvancedInfoCheckbox')
-const InternalTempInput = document.getElementById('internalTempInput')
-const ExternalTempInput = document.getElementById('externalTempInput')
-const WallWidthInput = document.getElementById('wallWidthInput')
-const WallHeightInput = document.getElementById('wallHeightInput')
-const InternalTempError = document.getElementById('internalTempError')
-const ExternalTempError = document.getElementById('externalTempError')
-const WallWidthError = document.getElementById('wallWidthError')
-const WallHeightError = document.getElementById('wallHeightError')
 
 
 //yare yare dazes
@@ -152,16 +144,6 @@ const clearValidationErrors = () => {
     FileError.textContent = ''
     DropZone.classList.remove('field-invalid')
 
-    // clearing the normal form field errors
-    ;[
-        { input: InternalTempInput, error: InternalTempError },
-        { input: ExternalTempInput, error: ExternalTempError },
-        { input: WallWidthInput, error: WallWidthError },
-        { input: WallHeightInput, error: WallHeightError }
-    ].forEach(field => {
-        field.input.classList.remove('input-invalid')
-        field.error.textContent = ''
-    })
 
     // clearing every image card error as well
     currentThermalImages.forEach(image => {
@@ -249,12 +231,34 @@ const renderSelectedFiles = () => {
                 <label for="name-${image.id}">Image name / location</label>
                 <input type="text" id="name-${image.id}" class="selected-file-input ${image.hasNameError ? 'input-invalid' : ''}" placeholder="e.g. Front bedroom left wall" value="${image.locationName}">
                 <div class="field-error">${image.hasNameError ? 'You must name this image before submitting.' : ''}</div>
-            </div>
+
+                <label for="inttemp-${image.id}">Internal Temp (°C)</label>
+                <input type="number" id="inttemp-${image.id}" class="selected-file-input ${image.hasInternalTempError ? 'input-invalid' : ''}" placeholder="e.g. 20" value="${image.internalTemp}" step="0.1">
+                <div class="field-error">${image.hasInternalTempError ? 'Internal temperature required.' : ''}</div>
+            
+                <label for="exttemp-${image.id}">External Temp (°C)</label>
+                <input type="number" id="exttemp-${image.id}" class="selected-file-input ${image.hasExternalTempError ? 'input-invalid' : ''}" placeholder="e.g. 5" value="${image.externalTemp}" step="0.1">
+                <div class="field-error">${image.hasExternalTempError ? 'External temperature required.' : ''}</div>
+            
+                <label for="wallheight-${image.id}">Wall Height (m)</label>
+                <input type="number" id="wallheight-${image.id}" class="selected-file-input ${image.hasWallHeightError ? 'input-invalid' : ''}" placeholder="e.g. 2.5" value="${image.wallHeight}" step="0.1">
+                <div class="field-error">${image.hasWallHeightError ? 'Wall height required.' : ''}</div>
+
+                <label for="camtype-${image.id}">Camera Type</label>
+                <select id="camtype-${image.id}" class="selected-file-input">
+                    <option value="FLIR E40bx" ${image.cameraType === 'FLIR E40bx' ? 'selected' : ''}>FLIR E40bx</option>
+                    <option value="HIKMICRO M11W" ${image.cameraType === 'HIKMICRO M11W' ? 'selected' : ''}>HIKMICRO M11W</option>
+                </select>
+                </div>
             <button class="remove-file-btn" data-image-id="${image.id}" type="button">Remove</button>
         `
 
         // grabbing the input so we can keep the name synced to state
         const nameInput = card.querySelector('.selected-file-input')
+        const internalTempInput = card.querySelector(`#inttemp-${image.id}`)
+        const externalTempInput = card.querySelector(`#exttemp-${image.id}`)
+        const wallHeightInput = card.querySelector(`#wallheight-${image.id}`)
+        const cameraTypeInput = card.querySelector(`#camtype-${image.id}`)
         // grabbing the remove button so they can bin a bad image
         const removeBtn = card.querySelector('.remove-file-btn')
 
@@ -271,6 +275,46 @@ const renderSelectedFiles = () => {
                 const localError = card.querySelector('.field-error')
                 localError.textContent = ''
             }
+        })
+
+        // listening for changes to the internal temp input
+        internalTempInput.addEventListener('input', (e) => {
+            image.internalTemp = e.target.value
+
+            // can clear the error if non-empty
+            if (e.target.value.trim() !== '') {
+                image.hasInternalTempError = false
+                internalTempInput.classList.remove('input-invalid')
+                internalTempInput.parentElement.querySelector('.field-error').textContent = ''
+            }
+        })
+
+        // listening for changes to the external temp input
+        externalTempInput.addEventListener('input', (e) => {
+            image.externalTemp = e.target.value
+
+            // can clear error if non-empty
+            if (e.target.value.trim() !== '') {
+                image.hasExternalTempError = false
+                externalTempInput.classList.remove('input-invalid')
+                externalTempInput.parentElement.querySelector('.field-error').textContent = ''
+            }
+        })
+
+        // listening for changes to the wall height input
+        wallHeightInput.addEventListener('input', (e) => {
+            image.wallHeight = e.target.value
+
+            // can clear error if non-empty
+            if (e.target.value.trim() !== '') {
+                image.hasWallHeightError = false
+                wallHeightInput.classList.remove('input-invalid')
+                wallHeightInput.parentElement.querySelector('.field-error').textContent = ''
+            }
+        })
+
+        cameraTypeInput.addEventListener('change', (e) => {
+            image.cameraType = e.target.value
         })
 
         // listening for the remove button
@@ -312,7 +356,7 @@ const removeImageById = (imageId) => {
 
 
 // this turns a file into the object shape our app wants
-const buildImageObject = (file, sourceLabel = 'Uploaded directly') => {
+const buildImageObject = (file, sourceLabel = 'Uploaded directly', locationName = '') => {
 
 
     // returning our standard shape for each image
@@ -320,8 +364,16 @@ const buildImageObject = (file, sourceLabel = 'Uploaded directly') => {
         id: makeImageId(),
         file,
         previewUrl: URL.createObjectURL(file),
-        locationName: '',
+        locationName: locationName, // pre-fills if they give folder name
         hasNameError: false,
+        internalTemp: '',
+        hasInternalTempError: false,
+        externalTemp: '',
+        hasExternalTempError: false,
+        wallHeight: '',
+        hasWallHeightError: false,
+        cameraType: 'FLIR E40bx', // default value
+        distance: 2.0,
         sourceLabel
     }
 }
@@ -360,11 +412,16 @@ const extractImagesFromZip = async (zipFile) => {
         // keeping only the actual file name without all the zip folder guff
         const cleanName = entry.name.split('/').pop()
 
+        // split the path and get the parent folder's name if it exists
+        const pathParts = entry.name.split('/')
+        // if it's inside a folder, get the folder name, if loose in the zip, call it "Unlabelled"
+        const folderName = pathParts.length > 1 ? pathParts[pathParts.length - 2] : ''
+
         // making a real file object out of the blob so the rest of the app can use it normally
         const extractedFile = new File([blob], cleanName, { type: mimeType || blob.type || 'application/octet-stream' })
 
         // pushing the processed image into our output array
-        extractedImages.push(buildImageObject(extractedFile, `Extracted from ${zipFile.name}`))
+        extractedImages.push(buildImageObject(extractedFile, `Extracted from ${zipFile.name}`, folderName))
     }
 
     // sending back whatever images we found
@@ -422,6 +479,7 @@ const handleFiles = async (files) => {
 
             // if it reaches here then it is not something we accept
             invalidFiles.push(file.name)
+            
         }
 
         // deduping by name + size + lastModified so we dont stack accidental doubles forever
@@ -444,7 +502,7 @@ const handleFiles = async (files) => {
 
         // if anything was invalid we show that in red without nuking the valid files
         if (invalidFiles.length > 0) {
-            showFileError(`Only JPEG, PNG, TIFF, or ZIP files containing those image types are allowed. Problem files: ${invalidFiles.join(', ')}`)
+            showFileError(`Only ZIP files containing those image types are allowed. Problem files: ${invalidFiles.join(', ')}`)
         }
 
     } catch (error) {
@@ -480,58 +538,38 @@ const validateForm = () => {
         isValid = false
     }
 
-    // checking internal temp
-    if (InternalTempInput.value.trim() === '') {
-        showInputError(InternalTempInput, InternalTempError, 'You must enter the internal temperature.')
-        isValid = false
-    }
-
-    // checking external temp
-    if (ExternalTempInput.value.trim() === '') {
-        showInputError(ExternalTempInput, ExternalTempError, 'You must enter the external temperature.')
-        isValid = false
-    }
-
-    // checking wall width
-    if (WallWidthInput.value.trim() === '') {
-        showInputError(WallWidthInput, WallWidthError, 'You must enter the wall width.')
-        isValid = false
-    }
-
-    // checking wall height
-    if (WallHeightInput.value.trim() === '') {
-        showInputError(WallHeightInput, WallHeightError, 'You must enter the wall height.')
-        isValid = false
-    }
-
-    // checking internal temp is actually a number
-    if (InternalTempInput.value.trim() !== '' && Number.isNaN(Number(InternalTempInput.value))) {
-        showInputError(InternalTempInput, InternalTempError, 'Internal temperature must be a number.')
-        isValid = false
-    }
-
-    // checking external temp is actually a number
-    if (ExternalTempInput.value.trim() !== '' && Number.isNaN(Number(ExternalTempInput.value))) {
-        showInputError(ExternalTempInput, ExternalTempError, 'External temperature must be a number.')
-        isValid = false
-    }
-
-    // checking wall width is actually a number above 0
-    if (WallWidthInput.value.trim() !== '' && (Number.isNaN(Number(WallWidthInput.value)) || Number(WallWidthInput.value) <= 0)) {
-        showInputError(WallWidthInput, WallWidthError, 'Wall width must be a number greater than 0.')
-        isValid = false
-    }
-
-    // checking wall height is actually a number above 0
-    if (WallHeightInput.value.trim() !== '' && (Number.isNaN(Number(WallHeightInput.value)) || Number(WallHeightInput.value) <= 0)) {
-        showInputError(WallHeightInput, WallHeightError, 'Wall height must be a number greater than 0.')
-        isValid = false
-    }
-
-    // making sure every image has a name/location attached to it
+    // validating each image
     currentThermalImages.forEach(image => {
+        // checking every image has a name/location attached to it
         if (!image.locationName.trim()) {
             image.hasNameError = true
+            isValid = false
+        }
+
+        // checking internal temp for each image
+        if (image.internalTemp.trim() === '') {
+            image.hasInternalTempError = true
+            isValid = false
+        } else if (Number.isNaN(Number(image.internalTemp))) {
+            image.hasInternalTempError = true
+            isValid = false
+        }
+
+        // checking external temp for each image
+        if (image.externalTemp.trim() === '') {
+            image.hasExternalTempError = true
+            isValid = false
+        } else if (Number.isNaN(Number(image.externalTemp))) {
+            image.hasExternalTempError = true
+            isValid = false
+        }
+
+        // checking wall height for each image
+        if (image.wallHeight.trim() === '') {
+            image.hasWallHeightError = true
+            isValid = false
+        } else if (Number.isNaN(Number(image.wallHeight)) || Number(image.wallHeight) <= 0) {
+            image.hasWallHeightError = true
             isValid = false
         }
     })
@@ -727,10 +765,6 @@ const renderAnalysedImages = (images) => {
                     <div class="stat-value">${image.averageSurfaceTemp}</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Affected Area</div>
-                    <div class="stat-value">${image.affectedArea}</div>
-                </div>
-                <div class="stat-card">
                     <div class="stat-label">Error Margin</div>
                     <div class="stat-value">${image.errorMargin}</div>
                 </div>
@@ -762,12 +796,10 @@ const renderAnalysedImages = (images) => {
 const createMockAnalysisResponse = () => {
 
 
-    // grabbing the wall measurements and temperatures from the form
-    const internalTemp = Number(InternalTempInput.value)
-    const externalTemp = Number(ExternalTempInput.value)
-    const wallWidth = Number(WallWidthInput.value)
-    const wallHeight = Number(WallHeightInput.value)
-    const wallArea = wallWidth * wallHeight
+    // grab the temperatures from the very first image card to use for our mock math
+    const firstImage = currentThermalImages[0] || {}
+    const internalTemp = Number(firstImage.internalTemp) || 20
+    const externalTemp = Number(firstImage.externalTemp) || 5
     const deltaT = Math.abs(internalTemp - externalTemp)
 
     // this array will hold all the per-image results
@@ -782,8 +814,6 @@ const createMockAnalysisResponse = () => {
         const lowestTemp = Number((internalTemp - (deltaT * 0.35) - (index * 0.7) - 1.8).toFixed(1))
         // making a pretend average surface temp
         const averageSurfaceTemp = Number((internalTemp - (deltaT * 0.18) - (index * 0.3)).toFixed(1))
-        // making a pretend affected area percentage
-        const affectedAreaPercent = Number((8 + (index * 3.4) + Math.min(deltaT * 0.45, 9)).toFixed(1))
         // making a pretend error margin
         const errorMargin = Number((0.4 + (index * 0.08)).toFixed(2))
         // making a pretend psi value
@@ -802,7 +832,6 @@ const createMockAnalysisResponse = () => {
             severityIndex,
             lowestTemp: `${lowestTemp.toFixed(1)}°C`,
             averageSurfaceTemp: `${averageSurfaceTemp.toFixed(1)}°C`,
-            affectedArea: `${affectedAreaPercent.toFixed(1)}%`,
             errorMargin: `±${errorMargin.toFixed(2)}°C`,
             psiValue: `${psiValue.toFixed(2)} W/mK`,
             uValue: `${uValue.toFixed(2)} W/m²K`,
@@ -817,12 +846,10 @@ const createMockAnalysisResponse = () => {
     // working out a few global result numbers from all the images
     const lowestTempFound = Math.min(...analysedImages.map(image => Number(image.lowestTemp.replace('°C', ''))))
     const averageSurfaceTempOverall = analysedImages.reduce((sum, image) => sum + Number(image.averageSurfaceTemp.replace('°C', '')), 0) / analysedImages.length
-    const averageAffectedArea = analysedImages.reduce((sum, image) => sum + Number(image.affectedArea.replace('%', '')), 0) / analysedImages.length
     const averageSeverity = analysedImages.reduce((sum, image) => sum + image.severityIndex, 0) / analysedImages.length
     const averagePsi = analysedImages.reduce((sum, image) => sum + Number(image.psiValue.replace(' W/mK', '')), 0) / analysedImages.length
     const averageU = analysedImages.reduce((sum, image) => sum + Number(image.uValue.replace(' W/m²K', '')), 0) / analysedImages.length
     const averageErrorMargin = analysedImages.reduce((sum, image) => sum + Number(image.errorMargin.replace('±', '').replace('°C', '')), 0) / analysedImages.length
-    const affectedWallArea = wallArea * (averageAffectedArea / 100)
 
     // building the overall response object the rest of the ui expects
     return {
@@ -832,8 +859,6 @@ const createMockAnalysisResponse = () => {
             { label: 'Images Analysed', value: `${analysedImages.length}` },
             { label: 'Lowest Temp Found', value: `${lowestTempFound.toFixed(1)}°C` },
             { label: 'Average Surface Temp', value: `${averageSurfaceTempOverall.toFixed(1)}°C` },
-            { label: 'Affected Wall Area', value: `${affectedWallArea.toFixed(2)} m²` },
-            { label: 'Wall Size Entered', value: `${wallArea.toFixed(2)} m²` },
             { label: 'Internal vs External ΔT', value: `${deltaT.toFixed(1)}°C` }
         ],
         technicalStats: [
@@ -853,19 +878,56 @@ const createMockAnalysisResponse = () => {
 
 
 // this is where we would actually send the data to the backend later
-const sendImagesForAnalysis = () => {
+const sendImagesForAnalysis = async () => {
 
+    const form = new FormData();
 
-    // returning a promise so the submit flow looks like a real api call
-    return new Promise((resolve) => {
+    currentThermalImages.forEach((img) => {
+        form.append('files', img.file);
+        form.append('locations', img.locationName);
+        form.append('int_amb_temps', img.internalTemp);
+        form.append('ext_temps', img.externalTemp);
+        form.append('emissivities', 0.95);
+        form.append('wall_heights', img.wallHeight);
+        form.append('camera_type', img.cameraType);
+    });
 
-        // waiting a little bit so the loading overlay actually appears
-        setTimeout(() => {
-            resolve(createMockAnalysisResponse())
-        }, FAKE_NETWORK_DELAY)
-    })
+    const resp = await fetch('http://localhost:8000/analyse-images/', {
+        method: 'POST',
+        body: form
+    });
+
+    if (!resp.ok) {
+        throw new Error(`API error ${resp.status}`);
+    }
+
+    // assuming the backend returns JSON like { psis: [...], psi_severities: [...], plots: [...] }
+    return await resp.json();
 }
 
+// this collects per-image analysis data for the backend
+const collectAnalysisData = () => {
+    
+    const locations = currentThermalImages.map(img => img.locationName)
+    const intAmbTemps = currentThermalImages.map(img => Number(img.internalTemp))
+    const extTemps = currentThermalImages.map(img => Number(img.externalTemp))
+    const emissivities = currentThermalImages.map(() => 0.95)  // default value
+    const pixelLengths = currentThermalImages.map(() => 0.001)  // default value
+    const wallHeights = currentThermalImages.map(img => Number(img.wallHeight))
+    const cameraTypes = currentThermalImages.map(img => img.cameraType)
+    const distances = currentThermalImages.map(img => img.distance)
+    
+    return {
+        locations,
+        intAmbTemps,
+        extTemps,
+        emissivities,
+        pixelLengths,
+        wallHeights,
+        cameraTypes,
+        distances
+    }
+}
 
 
 // function to show the results when the backend sends them back
@@ -954,27 +1016,6 @@ DropZone.addEventListener('click', () => FileInput.click())
 // adding an event listener to the invisible file input for when its value changes
 FileInput.addEventListener('change', () => handleFiles(FileInput.files))
 
-// clearing errors live when the main inputs change
-InternalTempInput.addEventListener('input', () => {
-    InternalTempInput.classList.remove('input-invalid')
-    InternalTempError.textContent = ''
-})
-
-ExternalTempInput.addEventListener('input', () => {
-    ExternalTempInput.classList.remove('input-invalid')
-    ExternalTempError.textContent = ''
-})
-
-WallWidthInput.addEventListener('input', () => {
-    WallWidthInput.classList.remove('input-invalid')
-    WallWidthError.textContent = ''
-})
-
-WallHeightInput.addEventListener('input', () => {
-    WallHeightInput.classList.remove('input-invalid')
-    WallHeightError.textContent = ''
-})
-
 // adding an event listener to the reset button
 ResetBtn.addEventListener('click', () => {
 
@@ -989,12 +1030,6 @@ ResetBtn.addEventListener('click', () => {
     FileInput.value = ''
     FileLabel.textContent = ''
     FileError.textContent = ''
-
-    // resetting the normal inputs
-    InternalTempInput.value = ''
-    ExternalTempInput.value = ''
-    WallWidthInput.value = ''
-    WallHeightInput.value = ''
 
     // resetting the advanced checkbox
     ShowAdvancedInfoCheckbox.checked = false
@@ -1062,6 +1097,8 @@ SubmitBtn.addEventListener('click', async () => {
 
         // waiting for the pretend backend to reply
         const response = await sendImagesForAnalysis()
+
+        console.log(response)
 
         // passing our fake data into the display function so it shows up on screen
         displayResults(response)

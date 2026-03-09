@@ -1,11 +1,21 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
 from PIL import Image as PILImage
 from src.image import Image
-from aggregate_calculations import *
+from src.aggregate_calculations import *
 import os
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],       # Allow all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],       # Allow all headers
+)
+
 
 # Plots directory
 PLOT_DIR = "plots"
@@ -20,17 +30,17 @@ def analyse_images(
     int_amb_temps: list[float] = Form(...),
     ext_temps: list[float] = Form(...),
     emissivities: list[float] = Form(...),
-    pixel_lengths: list[float] = Form(...),
-    wall_heights: list[float] = Form(...)
+    wall_heights: list[float] = Form(...),
+    camera_type: str = Form(...)
 ):
     """
     Accept multiple image files, a location name per image, and payload parameters.
-    Returns a dictionary mapping location names to lists of Image objects.
+    Returns a dictionary containing data to be used by the frontend
     """
 
     # Validate lengths
     if not (len(files) == len(locations) == len(int_amb_temps) == len(ext_temps) == len(emissivities)
-            == len(pixel_lengths) == len(wall_heights)):
+            == len(wall_heights)):
         return {"error": "Mismatch between number of files, locations, and payload parameters"}
 
     # Dictionary mapping location -> list of Image objects
@@ -42,14 +52,14 @@ def analyse_images(
 
         # Create Image object
         img_obj = Image(
-            image=pil_image,
-            cb_pix=None,
-            sf_pix=None,
-            int_amb_temp=int_amb_temps[idx],
-            ext_temp=ext_temps[idx],
-            emissivity=emissivities[idx],
-            pixel_length=pixel_lengths[idx],
-            wall_height=wall_heights[idx]
+            pil_image,
+            None,
+            None,
+            int_amb_temps[idx],
+            ext_temps[idx],
+            emissivities[idx],
+            None,
+            wall_heights[idx]
         )
 
         # Append to location list
