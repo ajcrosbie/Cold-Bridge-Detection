@@ -1,4 +1,4 @@
-from extract_temps import *
+from .extract_temps import *
 import numpy as np
 import cv2
 

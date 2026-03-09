@@ -1,6 +1,6 @@
 import numpy as np
-import value_calculation
-from image import Image
+from . import value_calculation
+from .image import Image
 import matplotlib.pyplot as plt
 from scipy import stats
 

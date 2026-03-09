@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import shutil
 from uuid import uuid4
-from computer_vision.imageRunnner import run_images
+from src.computer_vision.imageRunnner import run_images
 import numpy as np
 from src.value_calculation import calc_pixel_length
 

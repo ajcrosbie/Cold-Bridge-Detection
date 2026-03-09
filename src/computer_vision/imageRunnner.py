@@ -1,9 +1,7 @@
-from extract_cold_bridge  import *
-from extract_temps import *
+from .extract_cold_bridge  import *
+from .extract_temps import *
 
-
-
-def run_images(img_paths:list[PathLike]) -> list[tuple[np.ndarray, float]]:
+def run_images(img_paths:list[str]) -> list[tuple[np.ndarray, float]]:
     l = []
     for i in img_paths:
         timg, tmin, tmax = image_to_temperature_map(i)

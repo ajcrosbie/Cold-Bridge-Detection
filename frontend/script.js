@@ -725,15 +725,15 @@ const renderApiGraph = (graphData) => {
 
 
 
-// this makes the image result cards for each analysed image
-const renderAnalysedImages = (images) => {
+// this makes the location result cards for each analysed location
+const renderAnalysedLocations = (locations) => {
 
 
-    // wiping any old image cards
+    // wiping any old location cards
     AnalysedImagesList.innerHTML = ''
 
-    // looping over every analysed image the backend sent back
-    images.forEach(image => {
+    // looping over every analysed location the backend sent back
+    locations.forEach(location => {
 
         // making the main result card
         const card = document.createElement('div')
@@ -743,52 +743,31 @@ const renderAnalysedImages = (images) => {
         card.innerHTML = `
             <div class="analysed-image-header">
                 <div>
-                    <h4>${image.locationName}</h4>
-                    <p>${image.summary}</p>
-                </div>
-            </div>
-
-            <div class="analysed-image-preview-container">
-                <div class="analysed-image-wrapper">
-                    <img src="${image.previewUrl}" alt="${image.locationName}" class="analysed-image-preview">
-                    <div class="circle-overlay"></div>
+                    <h4>${location.locationName}</h4>
+                    <p>${location.severityIndex >= 5.5 ? 'Significant thermal bridging detected' : 'Moderate thermal bridging detected'}</p>
                 </div>
             </div>
 
             <div class="stats-grid image-stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">Psi Value</div>
-                    <div class="stat-value">${image.psiValue}</div>
+                    <div class="stat-label">Average Psi Value</div>
+                    <div class="stat-value">${location.psiValue}</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Severity Index</div>
-                    <div class="stat-value">${image.severityIndex}</div>
+                    <div class="stat-label">Average Severity Index</div>
+                    <div class="stat-value">${location.severityIndex.toFixed(1)}</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Error Margin</div>
-                    <div class="stat-value">${image.errorMargin}</div>
+                    <div class="stat-label">Average Error Margin</div>
+                    <div class="stat-value">${location.errorMargin}</div>
                 </div>
             </div>
 
             <div class="severity-plot-container">
-                <h5>Severity Plot</h5>
-                <img src="${image.plotUrl}" alt="Severity plot for ${image.locationName}" class="severity-plot">
+                <h5>Sensitivity Plot</h5>
+                <img src="${location.plotUrl}" alt="Sensitivity plot for ${location.locationName}" class="severity-plot">
             </div>
         `
-
-        // grabbing the overlay container
-        const overlay = card.querySelector('.circle-overlay')
-
-        // drawing all the cold bridge circles for this image
-        image.coldBridges.forEach(bridge => {
-            const circle = document.createElement('div')
-            circle.className = 'cold-bridge-circle'
-            circle.style.left = `${bridge.x}%`
-            circle.style.top = `${bridge.y}%`
-            circle.style.width = `${bridge.radius}px`
-            circle.style.height = `${bridge.radius}px`
-            overlay.appendChild(circle)
-        })
 
         // slapping the finished card onto the page
         AnalysedImagesList.appendChild(card)
@@ -945,30 +924,13 @@ const displayResults = (data) => {
     // hiding the upload section so they cant upload another one yet
     UploadSection.classList.add('hidden')
 
-    // create location to plot mapping for sensitivities plots
-    const locationPlots = {};
-    let plotIdx = 0;
-    const locations = [...new Set(currentThermalImages.map(img => img.locationName))];
-    locations.forEach(loc => {
-        locationPlots[loc] = `${API_BASE_URL}/${data.plots[plotIdx++]}`;
-    });
-
-    // create analysed images from API response
-    const analysedImages = currentThermalImages.map((image, idx) => ({
-        id: image.id,
-        locationName: image.locationName,
-        previewUrl: image.previewUrl,
-        summary: data.psi_severities[idx] >= 5.5 ? 'Significant thermal bridging detected' : 'Moderate thermal bridging detected',
-        severityIndex: data.psi_severities[idx],
-        lowestTemp: 'N/A',
-        averageSurfaceTemp: 'N/A',
-        affectedArea: 'N/A',
-        errorMargin: `±${data.error_margins[idx].toFixed(2)}°C`,
+    // create analysed locations from API response
+    const analysedLocations = data.locations.map((location, idx) => ({
+        locationName: location,
         psiValue: `${data.psis[idx].toFixed(2)} W/mK`,
-        uValue: 'N/A',
-        confidence: 'N/A',
-        coldBridges: [],
-        plotUrl: locationPlots[image.locationName] // sensitivities plot for this location
+        severityIndex: data.psi_severities[idx],
+        errorMargin: `±${data.error_margins[idx].toFixed(2)}°C`,
+        plotUrl: `${API_BASE_URL}/${data.plots[idx]}`
     }));
 
     // calculate overall stats
@@ -981,7 +943,7 @@ const displayResults = (data) => {
 
     // general stats
     GeneralStatsGrid.innerHTML = generateStatsHTML([
-        { label: 'Images Analysed', value: `${analysedImages.length}` },
+        { label: 'Locations Analysed', value: `${analysedLocations.length}` },
         { label: 'Average Severity Index', value: averageSeverity.toFixed(1) },
         { label: 'Average Psi Value', value: `${averagePsi.toFixed(2)} W/mK` },
         { label: 'Average Error Margin', value: `±${averageErrorMargin.toFixed(2)}°C` }
@@ -990,11 +952,11 @@ const displayResults = (data) => {
     // tech stats (if any)
     TechStatsGrid.innerHTML = '';
 
-    // render individual image results
-    renderAnalysedImages(analysedImages);
+    // render individual location results
+    renderAnalysedLocations(analysedLocations);
 
     // render overall plots (severities, psis, frsis)
-    const overallPlots = data.plots.slice(plotIdx);
+    const overallPlots = data.plots.slice(data.locations.length);
     const plotNames = ['Severity Plot', 'Psi Value Graph', 'FRSI Graph'];
     document.getElementById('overallPlots').innerHTML = overallPlots.map((url, idx) => `
         <div class="overall-plot">
