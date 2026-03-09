@@ -873,8 +873,10 @@ const sendImagesForAnalysis = async () => {
         form.append('ext_temps', img.externalTemp);
         form.append('emissivities', 0.95);
         form.append('wall_heights', img.wallHeight);
-        form.append('camera_type', img.cameraType);
+        form.append('camera_types', img.cameraType);
     });
+
+    console.log(form);
 
     const resp = await fetch('http://localhost:8000/analyse-images/', {
         method: 'POST',

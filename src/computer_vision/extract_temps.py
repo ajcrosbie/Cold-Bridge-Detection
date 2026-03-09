@@ -92,7 +92,7 @@ def image_to_temperature_map(image_path: str, boxes) -> tuple[np.ndarray, float,
         raise ValueError("Image not loaded")
 
     h, w, _ = img.shape
-    TOP_BOX, BOTTOM_BOX, INNER_BAR_BOX = boxes
+    TOP_BOX, BOTTOM_BOX, INNER_BAR_BOX, _ = boxes
 
     top = extract_from_box(img, TOP_BOX)
     

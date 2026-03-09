@@ -19,7 +19,7 @@ def detect_cold_mask(t_min: float, t_max: float, temp_img: np.ndarray, UI_BOXES)
     threshold = 0.2     # somewhat arbitrary
     upper_threshold_temp = t_min + (t_max - t_min) * threshold
 
-    h, w, _ = temp_img.shape
+    h, w = temp_img.shape
 
     mask = np.zeros((h, w), dtype=np.uint8)
 
@@ -55,7 +55,7 @@ def find_bridge(mask: np.ndarray) -> Box:
             bridges.append((x, y, w, h, area))
 
     # Want biggest bridge of the ones found. We take the one with the biggest width or height
-    bridge_x, bridge_y, bridge_w, bridge_h = max(bridges, key=lambda b: max(b[2], b[3]))
+    bridge_x, bridge_y, bridge_w, bridge_h, _ = max(bridges, key=lambda b: max(b[2], b[3]))
     return Box(bridge_y, bridge_y + bridge_h, bridge_x, bridge_x + bridge_w)
 
 

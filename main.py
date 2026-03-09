@@ -46,7 +46,8 @@ def analyse_images(
     Accept multiple image files, a location name per image, and payload parameters.
     Returns a dictionary containing data to be used by the frontend
     """
-
+    with open("logs.txt", "a") as f:
+        f.write("Request received\n")
     file_paths: list[Path] = []
     
     for file in files:
@@ -92,13 +93,16 @@ def analyse_images(
     # Process all images
     processed_results = run_images(file_paths, camera_types)
 
-    # Map processed results back to Image objects
-    idx = 0
+    # Collect all images in the order they were processed
+    all_images = []
     for img_list in location_dict.values():
-        for img in img_list:
-            img.cb_pix = processed_results[idx][0]
-            img.sf = processed_results[idx][1]
-            idx += 1
+        all_images.extend(img_list)
+
+    # Map processed results back to Image objects
+    for idx, img in enumerate(all_images):
+        img.cb_pix = processed_results[idx][0]
+        # processed_results returns (cb_pixels, surface_temp)
+        img.sf_temp = processed_results[idx][1]  # update sf_temp so psi calc uses correct value
 
     # float[][] of psi values for each image for each cold bridge
     psi_lists = [get_psis(img_list) for img_list in location_dict.values()]
@@ -110,12 +114,31 @@ def analyse_images(
     psi_severities = [psi_to_severity(psi) for psi in psi_values]
 
     plot_paths = []
-    for img_list in location_dict.values():
-        plot_paths.append(plot_sensitivities(img_list))
+    # generate sensitivity plot for each location, but don't let a single failure abort the whole response
+    for loc, img_list in location_dict.items():
+        try:
+            plot_paths.append(plot_sensitivities(img_list))
+        except Exception as e:
+            print(f"failed to plot sensitivities for {loc}: {e}")
+            plot_paths.append("")
 
-    plot_paths.append(plot_severities(location_dict))
-    plot_paths.append(plot_psis(location_dict))
-    plot_paths.append(plot_frsis(location_dict)) 
+    # overall plots
+    try:
+        plot_paths.append(plot_severities(location_dict))
+    except Exception as e:
+        print(f"failed to plot severities: {e}")
+        plot_paths.append("")
+    try:
+        plot_paths.append(plot_psis(location_dict))
+    except Exception as e:
+        print(f"failed to plot psis: {e}")
+        plot_paths.append("")
+    try:
+        plot_paths.append(plot_frsis(location_dict))
+    except Exception as e:
+        print(f"failed to plot frsis: {e}")
+        plot_paths.append("")
+
 
     print("List lengths equal: " + str(len(psi_lists)==len(psi_severities)==len(error_margins)))
 
@@ -127,6 +150,7 @@ def analyse_images(
             pass  # Ignore if file already deleted or inaccessible
 
     return {
+        "locations": list(location_dict.keys()),
         "psis": psi_lists.tolist(),
         "psi_severities": psi_severities,
         "error_margins": error_margins.tolist(),

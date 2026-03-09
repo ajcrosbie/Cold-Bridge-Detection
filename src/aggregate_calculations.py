@@ -81,6 +81,9 @@ def plot_sensitivities(images: list[Image], location: str = "", show: bool =Fals
     plt.title("Internal cold bridge surface temperature against external temperature")
     plt.xlabel("External air temp/K")
     plt.ylabel("Surface temp/K")
+
+    print(exts)
+    print(cb_temps)
     plt.scatter(exts, cb_temps)
 
     # plots best fit line
