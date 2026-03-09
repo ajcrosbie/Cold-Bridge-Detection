@@ -15,7 +15,7 @@ def clean_mask(mask: np.ndarray) -> np.ndarray:
     return mask
 
 
-def detect_cold_mask(t_min: float, t_max: float, temp_img: np.ndarray) -> np.ndarray:
+def detect_cold_mask(t_min: float, t_max: float, temp_img: np.ndarray, UI_BOXES) -> np.ndarray:
     threshold = 0.2     # somewhat arbitrary
     upper_threshold_temp = t_min + (t_max - t_min) * threshold
 
