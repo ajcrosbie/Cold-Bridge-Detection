@@ -67,7 +67,7 @@ def draw_bridge(image: np.ndarray, bridge: Box) -> np.ndarray:
     return output
 
 
-def find_mean(temp_img: np.ndarray, bridge: Box) -> float:
+def find_mean(temp_img: np.ndarray, bridge: Box, UI_BOXES) -> float:
     h, w = temp_img.shape
     mask = np.full((h, w), 255, dtype=np.uint8)
 
