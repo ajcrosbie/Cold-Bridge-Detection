@@ -757,17 +757,22 @@ const renderAnalysedImages = (images) => {
 
             <div class="stats-grid image-stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">Lowest Temp Found</div>
-                    <div class="stat-value">${image.lowestTemp}</div>
+                    <div class="stat-label">Psi Value</div>
+                    <div class="stat-value">${image.psiValue}</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Average Surface Temp</div>
-                    <div class="stat-value">${image.averageSurfaceTemp}</div>
+                    <div class="stat-label">Severity Index</div>
+                    <div class="stat-value">${image.severityIndex}</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Error Margin</div>
                     <div class="stat-value">${image.errorMargin}</div>
                 </div>
+            </div>
+
+            <div class="severity-plot-container">
+                <h5>Severity Plot</h5>
+                <img src="${image.plotUrl}" alt="Severity plot for ${image.locationName}" class="severity-plot">
             </div>
         `
 
@@ -933,35 +938,73 @@ const collectAnalysisData = () => {
 // function to show the results when the backend sends them back
 const displayResults = (data) => {
 
+    const API_BASE_URL = 'http://localhost:8000';
 
     // hiding the loading spinner because we are done thinking
     LoadingOverlay.style.display = 'none'
     // hiding the upload section so they cant upload another one yet
     UploadSection.classList.add('hidden')
 
-    // changing the main text to whatever the backend said the summary is
-    MainResultText.textContent = data.summary
+    // create location to plot mapping for sensitivities plots
+    const locationPlots = {};
+    let plotIdx = 0;
+    const locations = [...new Set(currentThermalImages.map(img => img.locationName))];
+    locations.forEach(loc => {
+        locationPlots[loc] = `${API_BASE_URL}/${data.plots[plotIdx++]}`;
+    });
 
-    // shoving the html we generated into the general stats grid
-    GeneralStatsGrid.innerHTML = generateStatsHTML(data.generalStats)
+    // create analysed images from API response
+    const analysedImages = currentThermalImages.map((image, idx) => ({
+        id: image.id,
+        locationName: image.locationName,
+        previewUrl: image.previewUrl,
+        summary: data.psi_severities[idx] >= 5.5 ? 'Significant thermal bridging detected' : 'Moderate thermal bridging detected',
+        severityIndex: data.psi_severities[idx],
+        lowestTemp: 'N/A',
+        averageSurfaceTemp: 'N/A',
+        affectedArea: 'N/A',
+        errorMargin: `±${data.error_margins[idx].toFixed(2)}°C`,
+        psiValue: `${data.psis[idx].toFixed(2)} W/mK`,
+        uValue: 'N/A',
+        confidence: 'N/A',
+        coldBridges: [],
+        plotUrl: locationPlots[image.locationName] // sensitivities plot for this location
+    }));
 
-    // checking if the user wanted the advanced info at the top
-    if (ShowAdvancedInfoCheckbox.checked && data.technicalStats && data.technicalStats.length > 0) {
-        AdvancedResultsSection.classList.remove('hidden')
-        TechStatsGrid.innerHTML = generateStatsHTML(data.technicalStats)
-    } else {
-        AdvancedResultsSection.classList.add('hidden')
-        TechStatsGrid.innerHTML = ''
-    }
+    // calculate overall stats
+    const averageSeverity = data.psi_severities.reduce((sum, sev) => sum + sev, 0) / data.psi_severities.length;
+    const averagePsi = data.psis.reduce((sum, psi) => sum + psi, 0) / data.psis.length;
+    const averageErrorMargin = data.error_margins.reduce((sum, err) => sum + err, 0) / data.error_margins.length;
 
-    // drawing the graph from the backend response or showing the placeholder
-    renderApiGraph(data.graphData)
+    // set main result text
+    MainResultText.textContent = averageSeverity >= 5.5 ? 'Cold bridge risk detected across the uploaded set' : 'Moderate cold bridge risk detected across the uploaded set';
 
-    // drawing the image cards from the backend response
-    renderAnalysedImages(data.analysedImages)
+    // general stats
+    GeneralStatsGrid.innerHTML = generateStatsHTML([
+        { label: 'Images Analysed', value: `${analysedImages.length}` },
+        { label: 'Average Severity Index', value: averageSeverity.toFixed(1) },
+        { label: 'Average Psi Value', value: `${averagePsi.toFixed(2)} W/mK` },
+        { label: 'Average Error Margin', value: `±${averageErrorMargin.toFixed(2)}°C` }
+    ]);
 
-    // finally showing the whole results section to the user
-    ResultsSection.style.display = 'block'
+    // tech stats (if any)
+    TechStatsGrid.innerHTML = '';
+
+    // render individual image results
+    renderAnalysedImages(analysedImages);
+
+    // render overall plots (severities, psis, frsis)
+    const overallPlots = data.plots.slice(plotIdx);
+    const plotNames = ['Severity Plot', 'Psi Value Graph', 'FRSI Graph'];
+    document.getElementById('overallPlots').innerHTML = overallPlots.map((url, idx) => `
+        <div class="overall-plot">
+            <h4>${plotNames[idx]}</h4>
+            <img src="${API_BASE_URL}/${url}" alt="${plotNames[idx]}" style="max-width: 100%; height: auto;">
+        </div>
+    `).join('');
+
+    // show results section
+    ResultsSection.style.display = 'block';
 }
 
 
