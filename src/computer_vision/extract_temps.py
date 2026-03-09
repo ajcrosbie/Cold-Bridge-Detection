@@ -85,7 +85,7 @@ def extract_from_box(img:np.ndarray, box:Box) -> np.ndarray:
     return img[box.yt:box.yb,
               box.xl:box.xr]
 
-def image_to_temperature_map(image_path: PathLike, boxes) -> tuple[np.ndarray, float, float]:
+def image_to_temperature_map(image_path: str, boxes) -> tuple[np.ndarray, float, float]:
 
     img = cv2.imread(image_path)
     if img is None:
