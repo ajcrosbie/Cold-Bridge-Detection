@@ -40,7 +40,7 @@ def analyse_images(
     ext_temps: list[float] = Form(...),
     emissivities: list[float] = Form(...),
     wall_heights: list[float] = Form(...),
-    camera_type: list[str] = Form(...)
+    camera_types: list[str] = Form(...)
 ):
     """
     Accept multiple image files, a location name per image, and payload parameters.
@@ -63,7 +63,7 @@ def analyse_images(
 
     # Validate lengths
     if not (len(files) == len(locations) == len(int_amb_temps) == len(ext_temps) == len(emissivities)
-            == len(wall_heights) == len(camera_type)):
+            == len(wall_heights) == len(camera_types)):
         return {"error": "Mismatch between number of files, locations, and payload parameters"}
 
     # Dictionary mapping location -> list of Image objects
@@ -79,7 +79,7 @@ def analyse_images(
             int_amb_temps[idx],
             ext_temps[idx],
             emissivities[idx],
-            calc_pixel_length(camera_type[idx]),
+            calc_pixel_length(camera_types[idx]),
             wall_heights[idx]
         )
 
@@ -90,7 +90,7 @@ def analyse_images(
         location_dict[loc].append(img_obj)
 
     # Process all images
-    processed_results = run_images(file_paths)
+    processed_results = run_images(file_paths, camera_types)
 
     # Map processed results back to Image objects
     idx = 0
