@@ -1,11 +1,11 @@
 import numpy as np
-from . import value_calculation
-from .image import Image
+import value_calculation
+from image import Image
 import matplotlib.pyplot as plt
 from scipy import stats
 
 # path to the folder in which any plots will be saved
-GRAPHPATH = "/plots/"
+GRAPHPATH = "plots/"
 
 def plot_psis_single_cb(images: list[Image], show=False) -> str:
     """
@@ -50,7 +50,7 @@ def get_psis(images: list[Image]) -> np.ndarray:
     """
     # take the surface temperature of each image to be the mean temperature across all pixels
     # labelled as being on the unaffected surface
-    surface_temps = np.mean([i.get_sf() for i in images], axis=1)
+    surface_temps = [i.sf_temp for i in images]
     exts = [i.ext for i in images]
 
     # calculate psi value for every image and return as a np array
