@@ -5,8 +5,17 @@ from PIL import Image as PILImage
 from src.image import Image
 from src.aggregate_calculations import *
 import os
+from pathlib import Path
+import shutil
+from uuid import uuid4
+from computer_vision.imageRunnner import run_images
+import numpy as np
+from src.value_calculation import calc_pixel_length
 
 app = FastAPI()
+
+UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR.mkdir(exist_ok=True)
 
 app.add_middleware(
     CORSMiddleware,
@@ -31,34 +40,46 @@ def analyse_images(
     ext_temps: list[float] = Form(...),
     emissivities: list[float] = Form(...),
     wall_heights: list[float] = Form(...),
-    camera_type: str = Form(...)
+    camera_type: list[str] = Form(...)
 ):
     """
     Accept multiple image files, a location name per image, and payload parameters.
     Returns a dictionary containing data to be used by the frontend
     """
 
+    file_paths: list[Path] = []
+    
+    for file in files:
+        # create unique filename to avoid collisions
+        ext = Path(file.filename).suffix
+        unique_name = f"{uuid4().hex}{ext}"
+        file_path = UPLOAD_DIR / unique_name
+        
+        # save file to disk
+        with open(file_path, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+        
+        file_paths.append(file_path)
+
     # Validate lengths
     if not (len(files) == len(locations) == len(int_amb_temps) == len(ext_temps) == len(emissivities)
-            == len(wall_heights)):
+            == len(wall_heights) == len(camera_type)):
         return {"error": "Mismatch between number of files, locations, and payload parameters"}
 
     # Dictionary mapping location -> list of Image objects
     location_dict = {}
 
     for idx, file in enumerate(files):
-        # Load PIL image directly from memory
-        pil_image = PILImage.open(file.file).convert("RGB")
 
         # Create Image object
         img_obj = Image(
-            pil_image,
+            None,
             None,
             None,
             int_amb_temps[idx],
             ext_temps[idx],
             emissivities[idx],
-            None,
+            calc_pixel_length(camera_type[idx]),
             wall_heights[idx]
         )
 
@@ -69,30 +90,45 @@ def analyse_images(
         location_dict[loc].append(img_obj)
 
     # Process all images
-    all_images = [img for imgs in location_dict.values() for img in imgs]
-    processed_images = process(all_images)  # placeholder function, expected to fill in cb_pix and sf_pix
+    processed_results = run_images(file_paths)
 
-    # Map processed images back to locations
-    processed_idx = 0
-    for loc, img_list in location_dict.items():
-        for i in range(len(img_list)):
-            img_list[i] = processed_images[processed_idx]
-            processed_idx += 1
+    # Map processed results back to Image objects
+    idx = 0
+    for img_list in location_dict.values():
+        for img in img_list:
+            img.cb_pix = processed_results[idx][0]
+            img.sf = processed_results[idx][1]
+            idx += 1
 
-    
-    psi_values = get_psis(processed_images)
+    # float[][] of psi values for each image for each cold bridge
+    psi_lists = [get_psis(img_list) for img_list in location_dict.values()]
+
+    # calculate error margins for each cold bridge
+    psi_values = [calculate_psi_ci(psi_list)[0] for psi_list in psi_lists]
+    error_margins = [calculate_psi_ci(psi_list)[1] for psi_list in psi_lists]
+
     psi_severities = [psi_to_severity(psi) for psi in psi_values]
 
     plot_paths = []
-    for loc in location_dict.keys():
-        plot_paths.append(plot_sensitivities(processed_images))
+    for img_list in location_dict.values():
+        plot_paths.append(plot_sensitivities(img_list))
 
     plot_paths.append(plot_severities(location_dict))
-    plot_paths.append(psi_plot = plot_psis(location_dict))
-    plot_paths.append(frsis_plot = plot_frsis(location_dict))   
+    plot_paths.append(plot_psis(location_dict))
+    plot_paths.append(plot_frsis(location_dict)) 
+
+    print("List lengths equal: " + str(len(psi_lists)==len(psi_severities)==len(error_margins)))
+
+    # Clean up uploaded files
+    for file_path in file_paths:
+        try:
+            file_path.unlink()
+        except OSError:
+            pass  # Ignore if file already deleted or inaccessible
 
     return {
-        "psis": psi_values.tolist(),
+        "psis": psi_lists.tolist(),
         "psi_severities": psi_severities,
+        "error_margins": error_margins.tolist(),
         "plots": plot_paths
     }
