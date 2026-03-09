@@ -68,12 +68,6 @@ def analyse_images(
             location_dict[loc] = []
         location_dict[loc].append(img_obj)
 
-    return {
-        "psis": [0.1, 0.2, 0.3],
-        "psi_severities": [3,4,6],
-        "plots": ["/plots/sensitivity.jpeg", "/plots/severities.jpeg", "/plots/frsis.jpeg"]
-    }
-
     # Process all images
     all_images = [img for imgs in location_dict.values() for img in imgs]
     processed_images = process(all_images)  # placeholder function, expected to fill in cb_pix and sf_pix
