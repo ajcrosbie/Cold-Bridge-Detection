@@ -65,3 +65,21 @@ def draw_bridge(image: np.ndarray, bridge: Box) -> np.ndarray:
     cv2.rectangle(output, (xl,yt), (xr,yb), (0,255,0), 2)
 
     return output
+
+
+def find_mean(temp_img: np.ndarray, bridge: Box) -> float:
+    h, w = temp_img.shape
+    mask = np.full((h, w), 255, dtype=np.uint8)
+
+    masked_area = 0     # number of pixels that the masks remove
+
+    # mask away UI boxes and the cold bridge
+    for box in [*UI_BOXES, bridge]:
+        cv2.rectangle(mask, (box.xl, box.yt), (box.xr, box.yb), 0, -1)
+        masked_area += (box.yb - box.yt) * (box.xr - box.xl)
+
+    masked_temp_img = cv2.bitwise_and(temp_img, temp_img, mask=mask)
+    sum_temp = np.sum(masked_temp_img)
+    avg_temp = sum_temp / ((h * w) - masked_area)
+
+    return avg_temp
