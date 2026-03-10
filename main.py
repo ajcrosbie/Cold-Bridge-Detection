@@ -107,8 +107,8 @@ def analyse_images(
     psi_severities = [frsi_to_severity(frsi) for frsi in frsi_values]
 
     plot_paths = []
-    for img_list in location_dict.values():
-        plot_paths.append(plot_sensitivities(img_list))
+    for loc, img_list in location_dict.items():
+        plot_paths.append(plot_sensitivities(img_list, location=loc))
 
     plot_paths.append(plot_severities(location_dict))
     plot_paths.append(plot_psis(location_dict))
