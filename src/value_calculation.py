@@ -60,7 +60,7 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     ext (float): external temperature (in celcius)
     t_wall (float): surrounding surface temperature of non-cb wall (in celcius)
     pix_temps (np.ndarray): temperatures of each pixel in cold bridge (in celcius)
-    Should be in K, but all are received in Celcius, so convert at the start
+    Should be in K, but all are received in Celcius, so convert at
     epsilon (float): surface emissivity
     lx (float): pixel length
     lch (float): characteristic length in the vertical direction (total height of wall being analysed)
@@ -68,7 +68,7 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     Returns:
     psi (float): psi-value
     """
-
+    print(f"pix_temps={pix_temps}")
     # TODO: MAKE NEATER
     # converting all celcius temps we receive to kelvin
     int_amb = int_amb + 273.15
@@ -131,7 +131,8 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     qxtb = qx - qxu
 
     # calculate total thermal bridge heat flow
-    qtb = np.sum(qxtb)
+    # heat loss along a line
+    qtb = np.mean(np.sum(qxtb, axis=0))
 
     if int_amb == ext:
         return 0.0  # how do we want to handle this its an invalid input tbh
