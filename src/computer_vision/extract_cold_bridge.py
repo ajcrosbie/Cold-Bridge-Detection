@@ -1,4 +1,4 @@
-from extract_temps import *
+from .extract_temps import *
 import numpy as np
 import cv2
 
@@ -25,7 +25,7 @@ def clean_mask(mask: np.ndarray) -> np.ndarray:
     return mask
 
 
-def detect_cold_mask(t_min: float, t_max: float, temp_img: np.ndarray) -> np.ndarray:
+def detect_cold_mask(t_min: float, t_max: float, threshold: float, temp_img: np.ndarray, UI_BOXES) -> np.ndarray:
     """
     Create a mask to include the coldest regions of the image and exclude all other regions. Additionally exclude UI 
     components from the mask.
@@ -42,12 +42,10 @@ def detect_cold_mask(t_min: float, t_max: float, temp_img: np.ndarray) -> np.nda
     mask (np.ndarray): A 2D numpy array with datatype uint8 representing as a mask of the coldest regions of the image.
     """
 
-    threshold = 0.2     # somewhat arbitrary small number (it works)
     upper_threshold_temp = t_min + (t_max - t_min) * threshold
     
     # The aim is to create a mask that includes the temperatures in the lowest 20% of the temperature bar.
-
-    h, w, _ = temp_img.shape
+    h, w = temp_img.shape
 
     mask = np.zeros((h, w), dtype=np.uint8)
 
@@ -63,13 +61,16 @@ def detect_cold_mask(t_min: float, t_max: float, temp_img: np.ndarray) -> np.nda
     return mask
 
 
-def find_bridge(mask: np.ndarray) -> Box:
+def find_bridge_from_mask(mask: np.ndarray, want_rectangle: bool = True) -> Box:
     """
     Find the connected components of the argument ``mask`` and return the component that is the thinnest 
     while still having sufficient area (these are characteristic traits of cold bridges).
 
     Parameters:
     mask (np.ndarray): A 2D numpy array with datatype uint8 representing a mask to be applied on the temperature image.
+
+    want_rectangle (bool): This represents whether we want constraints on the aspect ratio of detected cold bridges, 
+    i.e. if we want a roughly rectangular shape.
 
     Returns:
     bridge (Box): The coordinates of the corners of the rectangle containing the cold bridge.
@@ -90,12 +91,50 @@ def find_bridge(mask: np.ndarray) -> Box:
         aspect_ratio = max(w / h, h / w)
 
         # Want thin rectangular-looking bridges
-        if aspect_ratio > 2:
+        if not want_rectangle or aspect_ratio > 2:
             bridges.append((x, y, w, h))
+
+    if not bridges:
+        return None
 
     # Want biggest bridge of the ones found. We take the one with the biggest width or height
     bridge_x, bridge_y, bridge_w, bridge_h = max(bridges, key=lambda b: max(b[2], b[3]))
     return Box(bridge_y, bridge_y + bridge_h, bridge_x, bridge_x + bridge_w)
+
+
+def find_bridge_from_img(t_min: float, t_max: float, temp_img: np.ndarray, UI_BOXES) -> np.ndarray:
+    """
+    Find the best candidate cold bridge region of the image ``temp_img``. This is done by iteratively changing the
+    threshold temperature to find a mask of the image, and detecting connected components from the mask.
+
+    Parameters:
+    t_min (float): The minimum temperature in the image.
+
+    t_max (float): The maximum temperature in the image.
+
+    temp_img (np.ndarray): A 2D numpy array with datatype float64, where each value represents the temperature of the 
+    corresponding pixel in the original BGR thermal image.
+
+    Returns:
+    bridge (Box): The coordinates of the corners of the rectangle containing the cold bridge.
+    """
+
+    thresholds = [0.13, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8, 0.9]
+    bridge = None
+
+    mask = detect_cold_mask(t_min, t_max, thresholds[0], temp_img, UI_BOXES)
+    bridge = find_bridge_from_mask(mask, want_rectangle=True)
+    if bridge:
+        return bridge
+
+    for thresh in thresholds[1:]:
+        mask = detect_cold_mask(t_min, t_max, thresh, temp_img, UI_BOXES)
+        bridge = find_bridge_from_mask(mask, want_rectangle=False)
+        if bridge:
+            break
+
+    return bridge   # it is theoretically possible for this to return None
+    
 
 
 def draw_bridge(image: np.ndarray, bridge: Box) -> np.ndarray:
@@ -119,7 +158,7 @@ def draw_bridge(image: np.ndarray, bridge: Box) -> np.ndarray:
     return output
 
 
-def find_mean(temp_img: np.ndarray, bridge: Box) -> float:
+def find_mean(temp_img: np.ndarray, bridge: Box, UI_BOXES) -> float:
     """
     Find the mean temperature in the argument ``temp_img``, excluding the UI components and the cold bridge. The aim is
     to get a good approximation of the surrounding temperature.

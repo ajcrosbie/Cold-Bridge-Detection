@@ -56,11 +56,11 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     Ideally can be mapped over np arrays of these values and then an average taken across all time points.
 
     Parameters:
-    int_amb (float): internal ambient temperature
-    ext (float): external temperature
-    t_wall (float): surrounding surface temperature of non-cb wall
-    pix_temps (np.ndarray): temperatures of each pixel in cold bridge
-    Should be in K.
+    int_amb (float): internal ambient temperature (in celcius)
+    ext (float): external temperature (in celcius)
+    t_wall (float): surrounding surface temperature of non-cb wall (in celcius)
+    pix_temps (np.ndarray): temperatures of each pixel in cold bridge (in celcius)
+    Should be in K, but all are received in Celcius, so convert at
     epsilon (float): surface emissivity
     lx (float): pixel length
     lch (float): characteristic length in the vertical direction (total height of wall being analysed)
@@ -68,6 +68,15 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     Returns:
     psi (float): psi-value
     """
+    print(f"pix_temps={pix_temps}, min = {np.min(pix_temps)}, max = {np.max(pix_temps)}")
+    print(f"int_amb[={int_amb}, ext={ext}, t_wall={t_wall}, epsilon={epsilon}, lx={lx}, lch={lch}")
+    # TODO: MAKE NEATER
+    # converting all celcius temps we receive to kelvin
+    int_amb = int_amb + 273.15
+    ext = ext + 273.15
+    t_wall = t_wall + 273.15
+    pix_temps = pix_temps + 273.15
+
 
     # defining constants
     # thermal conductivity of air in W / (m.K) - changes with internal ambient temperature at constant pressure which we can assume
@@ -88,7 +97,7 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     rax = g * beta * (int_amb - pix_temps) * (lch ** 3) / (nu * alpha)
 
     # calculate Nusselt Number for each pixel 
-    nux = (0.825 + (0.387 * (rax ** (1/6))) / (1 + (0.492 * alpha / nu) ** (9/16)) ** (8/27)) ** 2
+    nux = (0.825 + (0.387 * (np.abs(rax) ** (1/6))) / (1 + (0.492 * alpha / nu) ** (9/16)) ** (8/27)) ** 2
 
     # calculate convective coefficient for each pixel
     hcx = nux * k / lch
@@ -105,7 +114,7 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     # identify uniform heat flow
     # calculate Rayleigh and Nusselt Numbers for the non-cb wall using src
     rax_u = g * beta * (int_amb - t_wall) * (lch ** 3) / (nu * alpha)
-    nux_u = (0.825 + (0.387 * (rax_u ** (1/6))) / (1 + (0.492 * alpha / nu) ** (9/16)) ** (8/27)) ** 2
+    nux_u = (0.825 + (0.387 * (np.abs(rax_u) ** (1/6))) / (1 + (0.492 * alpha / nu) ** (9/16)) ** (8/27)) ** 2
     
     # calculate convective coefficient for non-cb wall
     hcx_u = nux_u * k / lch
@@ -116,18 +125,34 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     
     # calculate uniform baseline heat flow per pixel (qxu)
     qconv_u = lx * hcx_u * (int_amb - t_wall)
-    qrad_u = lx * hrx_u * (int_amb - t_wall) # this evaluates to 0, as expected for no temp difference
+    qrad_u = lx * hrx_u * (int_amb - t_wall) 
     qxu = qconv_u + qrad_u 
 
     # calculate thermal bridge heat flow per pixel
     qxtb = qx - qxu
 
     # calculate total thermal bridge heat flow
-    qtb = np.sum(qxtb)
+    # heat loss along a line 
 
+    var_x = np.var(np.mean(pix_temps, axis=0)) 
+    var_y = np.var(np.mean(pix_temps, axis=1))
+
+    if var_x < var_y:
+        # bigger vertical variance = horizontal cb
+        # sum horizontally
+        qtb = np.mean(np.sum(qxtb, axis=1))
+        print("summed horizontally")
+    else:
+        # bigger horizontal variance = vertical cb
+        # sum vertically
+        qtb = np.mean(np.sum(qxtb, axis=0))
+        print("summed veritcally")
+
+    if int_amb == ext:
+        return 0.0  # how do we want to handle this its an invalid input tbh
     # calculate psi value
     psi = qtb / (int_amb - ext)
-
+    print(f"psi={psi}")
     return float(psi)
 
 def calc_pixel_length(camera: str, distance: float = 2.0) -> float:
