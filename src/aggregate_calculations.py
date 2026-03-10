@@ -1,6 +1,8 @@
 import numpy as np
 from . import value_calculation
 from .image import Image
+import matplotlib
+matplotlib.use('Agg') 
 import matplotlib.pyplot as plt
 from scipy import stats
  
