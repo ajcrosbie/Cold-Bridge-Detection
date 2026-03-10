@@ -962,7 +962,7 @@ const displayResults = (data) => {
     const plotNames = ['Severity Plot', 'Psi Value Graph', 'FRSI Graph'];
     document.getElementById('overallPlots').innerHTML = overallPlots.map((url, idx) => `
         <div class="overall-plot">
-            <h4>${plotNames[idx]}</h4>
+            <h3>${plotNames[idx]}</h3>
             <img src="${API_BASE_URL}/${url}" alt="${plotNames[idx]}" style="max-width: 100%; height: auto;">
         </div>
     `).join('');
