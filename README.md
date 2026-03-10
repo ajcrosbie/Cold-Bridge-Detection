@@ -22,15 +22,17 @@ pip install numpy matplotlib pytesseract scikit-learn opencv-python scipy datacl
 Then you need to install tesseract
 https://tesseract-ocr.github.io/tessdoc/Installation.html
 Ensure it's added to your path
+
+
 # How to run
 
 to run the server
 ```
-fastapi run ser/main.py
+fastapi run main.py
 ```
 
 
 There also needs to be a public webpage that the users can interact with. The contents of this webpage can be found in /frontend.
 
 # Challenges
-It is also advised that a full penetration test is completed before actually being deployed to the internet.
+It is also advised that a full penetration test is completed before actually being deployed to the internet. Because
