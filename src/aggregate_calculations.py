@@ -68,10 +68,14 @@ def plot_sensitivities(images: list[Image], location: str = "", show: bool =Fals
     :type images: list[Image]
     """
 
+    if len(images) == 1:
+        return ""
+
     path = f"{GRAPHPATH}sensitivity{'_'+location if location else ''}" + ".png"
 
     # surface temperature of the cold bridge - take to be the mean of all pixel temps
-    cb_temps = np.mean([i.get_cb() for i in images], axis=1)
+    # cb_temps = np.mean([i.get_cb() for i in images], axis=1)
+    cb_temps = [np.mean(i.get_cb()) for i in images]
     exts = np.array([i.ext for i in images])
 
     # calculate best fit line
@@ -86,6 +90,8 @@ def plot_sensitivities(images: list[Image], location: str = "", show: bool =Fals
         f.writelines(str(exts))
         f.writelines(str(cb_temps))
 
+    print(exts)
+    print(cb_temps)
     plt.scatter(exts, cb_temps)
 
     # plots best fit line

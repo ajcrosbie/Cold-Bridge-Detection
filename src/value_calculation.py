@@ -105,7 +105,7 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     # identify uniform heat flow
     # calculate Rayleigh and Nusselt Numbers for the non-cb wall using src
     rax_u = g * beta * (int_amb - t_wall) * (lch ** 3) / (nu * alpha)
-    nux_u = (0.825 + (0.387 * (rax_u ** (1/6))) / (1 + (0.492 * alpha / nu) ** (9/16)) ** (8/27)) ** 2
+    nux_u = (0.825 + (0.387 * (np.abs(rax_u) ** (1/6))) / (1 + (0.492 * alpha / nu) ** (9/16)) ** (8/27)) ** 2
     
     # calculate convective coefficient for non-cb wall
     hcx_u = nux_u * k / lch
@@ -125,6 +125,8 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     # calculate total thermal bridge heat flow
     qtb = np.sum(qxtb)
 
+    if int_amb == ext:
+        return 0.0  # how do we want to handle this its an invalid input tbh
     # calculate psi value
     psi = qtb / (int_amb - ext)
 
