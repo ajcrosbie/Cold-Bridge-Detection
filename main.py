@@ -115,7 +115,7 @@ def analyse_images(
         img.sf_temp = processed_results[idx][1]  # update sf_temp so psi calc uses correct value
 
     # float[][] of psi values for each image for each cold bridge
-    psi_lists = [get_psis(img_list) for img_list in location_dict.values()]
+    psi_lists = [get_psis(img_list).tolist() for img_list in location_dict.values()]
 
     # calculate error margins for each cold bridge
     psi_values = [calculate_psi_ci(psi_list)[0] for psi_list in psi_lists]
@@ -139,11 +139,17 @@ def analyse_images(
             file_path.unlink()
         except OSError:
             pass  # Ignore if file already deleted or inaccessible
-
+    print( {
+        "locations": list(location_dict.keys()),
+        "psis": psi_values,
+        "psi_severities": psi_severities,
+        "error_margins": error_margins,
+        "plots": plot_paths
+    })
     return {
         "locations": list(location_dict.keys()),
-        "psis": psi_lists.tolist(),
+        "psis": psi_values,
         "psi_severities": psi_severities,
-        "error_margins": error_margins.tolist(),
+        "error_margins": error_margins,
         "plots": plot_paths
     }

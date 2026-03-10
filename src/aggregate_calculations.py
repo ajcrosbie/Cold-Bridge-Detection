@@ -15,8 +15,8 @@ def plot_psis_single_cb(images: list[Image], show=False) -> str:
     :param images: list of Images ideally taken with different external temperatures
     """
 
-    path = f'{GRAPHPATH}singleImgPsi'
-    # Kind of useless as should just be a noisy horizontal line
+    path = f'{GRAPHPATH}singleImgPsi.png'
+#    Kind of useless as should just be a noisy horizontal line
 
     exts = [i.ext for i in images]
     psis = get_psis(images)
@@ -68,7 +68,7 @@ def plot_sensitivities(images: list[Image], location: str = "", show: bool =Fals
     :type images: list[Image]
     """
 
-    path = f"{GRAPHPATH}sensitivity{'_'+location if location else ''}"
+    path = f"{GRAPHPATH}sensitivity{'_'+location if location else ''}" + ".png"
 
     # surface temperature of the cold bridge - take to be the mean of all pixel temps
     cb_temps = np.mean([i.get_cb() for i in images], axis=1)
@@ -125,8 +125,7 @@ def plot_psis(cbs: dict[str, list[Image]], show: bool=False) -> str:
     
     :param cbs: Array of Image arrays. Each Image array corresponds to one suspected cold bridge
     """
-    path = f'{GRAPHPATH}psis'
-
+    path = f'{GRAPHPATH}psis.png'
     ranked = rank_cbs_by_psi(cbs)
     locs = [cb[0] for cb in ranked]
     psis = [cb[3] for cb in ranked]
@@ -154,7 +153,7 @@ def plot_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: 
     :param high_worse: (boolean) saying if high severity is bad or good
     
     """
-    path = f'{GRAPHPATH}severities'
+    path = f'{GRAPHPATH}severities.png'
     ranked = rank_cbs_by_psi(cbs)
     locs = [cb[0] for cb in ranked]
 
@@ -191,7 +190,7 @@ def plot_frsis(cbs: dict[str, list[Image]], show: bool =False) -> str:
 
     :param cbs: array of arrays of images corresponding to the same cold bridge
     """
-    path =f'{GRAPHPATH}frsis'
+    path = f'{GRAPHPATH}frsis.png'
     locs = list(cbs.keys())
 
     # calculates frsi for every image in 2d array cbs

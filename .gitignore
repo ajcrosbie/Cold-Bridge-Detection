@@ -3,3 +3,5 @@
 .vscode
 plots
 *img*
+*uploads*
+logs.txt
