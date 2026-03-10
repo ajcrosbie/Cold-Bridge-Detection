@@ -973,7 +973,7 @@ const displayResults = (data) => {
     document.getElementById('overallPlots').innerHTML = overallPlots.map((url, idx) => `
         <div class="overall-plot">
             <h3>${plotNames[idx]}</h3>
-            <img src="${API_BASE_URL}/${url}" alt="${plotNames[idx]}" style="max-width: 100%; height: auto;">
+            <img src="${API_BASE_URL}/${url}?t=${Date.now()}" alt="${plotNames[idx]}" style="max-width: 100%; height: auto;">
         </div>
     `).join('');
 

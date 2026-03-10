@@ -3,16 +3,10 @@ from . import value_calculation
 from .image import Image
 import matplotlib.pyplot as plt
 from scipy import stats
-import os
-
+ 
 # path to the folder in which any plots will be saved
 GRAPHPATH = "plots/"
 
-
-# syncs plot files to disk so that the frontend always fetches the right plots
-def sync_file(path: str):
-    with open(path, "r+b") as f:
-        os.fsync(f.fileno())
 
 def plot_psis_single_cb(images: list[Image], show=False) -> str:
     """
@@ -44,7 +38,6 @@ def plot_psis_single_cb(images: list[Image], show=False) -> str:
         plt.show()
     else:
         plt.savefig(path)
-        sync_file(path)
         plt.close()
 
     return path
@@ -112,7 +105,6 @@ def plot_sensitivities(images: list[Image], location: str = "", show: bool =Fals
         plt.show()
     else:
         plt.savefig(path)
-        sync_file(path)
         plt.close()
 
     return path
@@ -159,7 +151,6 @@ def plot_psis(cbs: dict[str, list[Image]], show: bool=False) -> str:
         plt.show()
     else:
         plt.savefig(path)
-        sync_file(path)
         plt.close()
 
     return path
@@ -200,7 +191,6 @@ def plot_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: 
     else:
         
         plt.savefig(path)
-        sync_file(path)
         plt.close()
 
     return path
@@ -229,7 +219,6 @@ def plot_frsis(cbs: dict[str, list[Image]], show: bool =False) -> str:
         plt.show()
     else:
         plt.savefig(path)
-        sync_file(path)
         plt.close()
         
     return path
