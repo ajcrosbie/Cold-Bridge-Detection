@@ -77,6 +77,8 @@ def find_text_float(img: np.ndarray) -> float:
     
     try:
         temp = float(clean_text)
+        while temp > 40:
+            temp = temp / 10
     except ValueError:
         print(f"Warning: Could not convert '{clean_text}' to float. Original text was: '{text}'")
         temp = 20.0 # toby plaster fix
