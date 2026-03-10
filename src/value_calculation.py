@@ -88,7 +88,7 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     rax = g * beta * (int_amb - pix_temps) * (lch ** 3) / (nu * alpha)
 
     # calculate Nusselt Number for each pixel 
-    nux = (0.825 + (0.387 * (rax ** (1/6))) / (1 + (0.492 * alpha / nu) ** (9/16)) ** (8/27)) ** 2
+    nux = (0.825 + (0.387 * (np.abs(rax) ** (1/6))) / (1 + (0.492 * alpha / nu) ** (9/16)) ** (8/27)) ** 2
 
     # calculate convective coefficient for each pixel
     hcx = nux * k / lch
