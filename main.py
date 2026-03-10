@@ -3,9 +3,17 @@ from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
 from src.image import Image
 from src.aggregate_calculations import *
+import os
+from src.computer_vision.imageRunnner import run_images
+import numpy as np
+from src.value_calculation import calc_pixel_length
+import logging
 import numpy as np
 import cv2
-import os
+ 
+logger = logging.getLogger("uvicorn.error")
+logger.setLevel(logging.INFO)
+
 
 app = FastAPI()
 
@@ -13,8 +21,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],       # Allow all HTTP methods (GET, POST, etc.)
-    allow_headers=["*"],       # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -32,16 +40,18 @@ def analyse_images(
     ext_temps: list[float] = Form(...),
     emissivities: list[float] = Form(...),
     wall_heights: list[float] = Form(...),
-    camera_type: str = Form(...)
+    camera_types: list[str] = Form(...)
 ):
     """
     Accept multiple image files, a location name per image, and payload parameters.
     Returns a dictionary containing data to be used by the frontend
     """
+    with open("Backendlogs.txt", "a") as f:
+        f.write("Request received\n")
 
     # Validate lengths
     if not (len(files) == len(locations) == len(int_amb_temps) == len(ext_temps) == len(emissivities)
-            == len(wall_heights)):
+            == len(wall_heights) == len(camera_types)):
         return {"error": "Mismatch between number of files, locations, and payload parameters"}
 
     # Dictionary mapping location -> list of Image objects
@@ -61,7 +71,7 @@ def analyse_images(
             int_amb_temps[idx],
             ext_temps[idx],
             emissivities[idx],
-            None,
+            calc_pixel_length(camera_types[idx]),
             wall_heights[idx]
         )
 
@@ -71,31 +81,52 @@ def analyse_images(
             location_dict[loc] = []
         location_dict[loc].append(img_obj)
 
-    # Process all images
-    all_images = [img for imgs in location_dict.values() for img in imgs]
-    processed_images = process(all_images)  # placeholder function, expected to fill in cb_pix and sf_pix
-
-    # Map processed images back to locations
-    processed_idx = 0
-    for loc, img_list in location_dict.items():
-        for i in range(len(img_list)):
-            img_list[i] = processed_images[processed_idx]
-            processed_idx += 1
-
+    # Collect all images in the order they were received
+    all_images = []
+    for img_list in location_dict.values():
+        all_images.extend(img_list)
     
-    psi_values = get_psis(processed_images)
-    psi_severities = [psi_to_severity(psi) for psi in psi_values]
+    # Process all images
+    processed_results = run_images([i.image for i in all_images], camera_types)
+
+    # Map processed results back to Image objects
+    for idx, img in enumerate(all_images):
+        img.cb_pix = processed_results[idx][0]
+        # processed_results returns (cb_pixels, surface_temp)
+        img.sf_temp = processed_results[idx][1]  # update sf_temp so psi calc uses correct value
+
+    # float[][] of psi values for each image for each cold bridge
+    psi_lists = [get_psis(img_list).tolist() for img_list in location_dict.values()]
+
+    frsi_values = [np.mean(get_frsis(img_list).tolist()) for img_list in location_dict.values()]
+
+    # calculate error margins for each cold bridge
+    psi_values = [calculate_psi_ci(psi_list)[0] for psi_list in psi_lists]
+    error_margins = [calculate_psi_ci(psi_list)[1] for psi_list in psi_lists]
+
+    psi_severities = [frsi_to_severity(frsi) for frsi in frsi_values]
 
     plot_paths = []
-    for loc in location_dict.keys():
-        plot_paths.append(plot_sensitivities(processed_images))
+    for loc, img_list in location_dict.items():
+        plot_paths.append(plot_sensitivities(img_list, location=loc))
 
     plot_paths.append(plot_severities(location_dict))
-    plot_paths.append(psi_plot = plot_psis(location_dict))
-    plot_paths.append(frsis_plot = plot_frsis(location_dict))   
+    plot_paths.append(plot_psis(location_dict))
+    plot_paths.append(plot_frsis(location_dict)) 
 
-    return {
-        "psis": psi_values.tolist(),
+    print("List lengths equal: " + str(len(psi_lists)==len(psi_severities)==len(error_margins)))
+         
+    print( {
+        "locations": list(location_dict.keys()),
+        "psis": psi_values,
         "psi_severities": psi_severities,
+        "error_margins": error_margins,
+        "plots": plot_paths
+    })
+    return {
+        "locations": list(location_dict.keys()),
+        "psis": psi_values,
+        "psi_severities": psi_severities,
+        "error_margins": error_margins,
         "plots": plot_paths
     }

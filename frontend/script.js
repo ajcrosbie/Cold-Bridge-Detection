@@ -17,14 +17,11 @@ const SelectedFilesList = document.getElementById('selectedFilesList')
 const AnalysedImagesList = document.getElementById('analysedImagesList')
 const GraphTitle = document.getElementById('graphTitle')
 const GraphSubtitle = document.getElementById('graphSubtitle')
-const GraphPlaceholder = document.getElementById('graphPlaceholder')
 const GraphWrapper = document.getElementById('graphWrapper')
 const ApiGraphCanvas = document.getElementById('apiGraphCanvas')
 const AdvancedResultsSection = document.getElementById('advancedResultsSection')
 const ShowAdvancedInfoCheckbox = document.getElementById('showAdvancedInfoCheckbox')
 
-
-//yare yare dazes
 
 
 
@@ -34,9 +31,6 @@ let appState = 'idle'
 let currentThermalImages = []
 // this is for the graph once the api sends us some numbers back
 let apiGraphInstance = null
-
-// setting a fake delay of 2 seconds to make it feel like the backend is doing some real work
-const FAKE_NETWORK_DELAY = 2000
 // this is the list of file types we are happy with
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/tiff', 'image/tif']
 // this is the list of file extensions we are happy with
@@ -46,7 +40,7 @@ const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.tif', '.tiff']
 
 // this function takes the stats array and turns it into html blocks so we dont get collision tings innit brevski
 const generateStatsHTML = (statsArray) => {
-
+    const showAdvanced = ShowAdvancedInfoCheckbox.checked;
 
     // if the array is empty we just return nothing
     if (!statsArray || statsArray.length === 0) {
@@ -54,14 +48,18 @@ const generateStatsHTML = (statsArray) => {
     }
 
     // we map over every stat in the array and return a string of html
-    return statsArray.map(stat => `
-
-        <div class="stat-card">
-            <div class="stat-label">${stat.label}</div>
-            <div class="stat-value">${stat.value}</div>
-        </div>
-    
-    `).join('')
+    return statsArray.map(stat => {
+        if(showAdvanced || (!showAdvanced && !stat.advanced)) {
+            return `
+                <div class="stat-card">
+                    <div class="stat-label">${stat.label}</div>
+                    <div class="stat-value">${stat.value}</div>
+                </div>
+                `;
+        } else {
+            return '';
+        }
+    }).join('')
     // then we join it together
 
 
@@ -235,11 +233,11 @@ const renderSelectedFiles = () => {
                 <label for="inttemp-${image.id}">Internal Temp (°C)</label>
                 <input type="number" id="inttemp-${image.id}" class="selected-file-input ${image.hasInternalTempError ? 'input-invalid' : ''}" placeholder="e.g. 20" value="${image.internalTemp}" step="0.1">
                 <div class="field-error">${image.hasInternalTempError ? 'Internal temperature required.' : ''}</div>
-            
+           
                 <label for="exttemp-${image.id}">External Temp (°C)</label>
                 <input type="number" id="exttemp-${image.id}" class="selected-file-input ${image.hasExternalTempError ? 'input-invalid' : ''}" placeholder="e.g. 5" value="${image.externalTemp}" step="0.1">
                 <div class="field-error">${image.hasExternalTempError ? 'External temperature required.' : ''}</div>
-            
+           
                 <label for="wallheight-${image.id}">Wall Height (m)</label>
                 <input type="number" id="wallheight-${image.id}" class="selected-file-input ${image.hasWallHeightError ? 'input-invalid' : ''}" placeholder="e.g. 2.5" value="${image.wallHeight}" step="0.1">
                 <div class="field-error">${image.hasWallHeightError ? 'Wall height required.' : ''}</div>
@@ -479,7 +477,7 @@ const handleFiles = async (files) => {
 
             // if it reaches here then it is not something we accept
             invalidFiles.push(file.name)
-            
+           
         }
 
         // deduping by name + size + lastModified so we dont stack accidental doubles forever
@@ -725,65 +723,68 @@ const renderApiGraph = (graphData) => {
 
 
 
-// this makes the image result cards for each analysed image
-const renderAnalysedImages = (images) => {
+// this makes the location result cards for each analysed location
+const renderAnalysedLocations = (locations) => {
+    const showAdvanced = ShowAdvancedInfoCheckbox.checked;
 
-
-    // wiping any old image cards
+    // wiping any old location cards
     AnalysedImagesList.innerHTML = ''
 
-    // looping over every analysed image the backend sent back
-    images.forEach(image => {
+    // looping over every analysed location the backend sent back
+    locations.forEach(location => {
+
+        const filteredImages = currentThermalImages.filter((img) =>
+            img.locationName === location.locationName
+        )
+
+        const image = filteredImages[0]
 
         // making the main result card
         const card = document.createElement('div')
         card.className = 'analysed-image-card'
 
+        AveragePsiValueHTML = showAdvanced ? `
+        <div class="stat-card">
+            <div class="stat-label advanced-info">Average Psi Value</div>
+            <div class="stat-value">${location.psiValue}</div>
+        </div>
+        ` : '';
+
+        AverageErrorMarginHTML = showAdvanced ? `
+        <div class="stat-card">
+            <div class="stat-label advanced-info">Average Error Margin</div>
+            <div class="stat-value">${location.errorMargin}</div>
+        </div>
+        ` : '';
+
         // putting the structure into the card
         card.innerHTML = `
             <div class="analysed-image-header">
                 <div>
-                    <h4>${image.locationName}</h4>
-                    <p>${image.summary}</p>
-                </div>
-            </div>
-
-            <div class="analysed-image-preview-container">
-                <div class="analysed-image-wrapper">
-                    <img src="${image.previewUrl}" alt="${image.locationName}" class="analysed-image-preview">
-                    <div class="circle-overlay"></div>
+                    <h4>${location.locationName}</h4>
+                    <p>${location.severityIndex >= 5.5 ? 'Significant thermal bridging detected' : 'Moderate thermal bridging detected'}</p>
                 </div>
             </div>
 
             <div class="stats-grid image-stats-grid">
+                ${AveragePsiValueHTML}
                 <div class="stat-card">
-                    <div class="stat-label">Lowest Temp Found</div>
-                    <div class="stat-value">${image.lowestTemp}</div>
+                    <div class="stat-label">Average Severity Index</div>
+                    <div class="stat-value">${location.severityIndex.toFixed(1)}</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">Average Surface Temp</div>
-                    <div class="stat-value">${image.averageSurfaceTemp}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Error Margin</div>
-                    <div class="stat-value">${image.errorMargin}</div>
-                </div>
+                ${AverageErrorMarginHTML}
+            </div>
+
+            <div class="analysed-image-preview-wrap">
+                <h5>Thermal Image</h5>
+                <img src="${image.previewUrl}" alt="${image.file.name}" class="selected-file-preview">
+            </div>
+
+            <div class="severity-plot-container">
+                <h5>Sensitivity Plot</h5>
+                <img src="${location.plotUrl}" alt="Sensitivity plot for ${location.locationName}" class="severity-plot">
             </div>
         `
-
-        // grabbing the overlay container
-        const overlay = card.querySelector('.circle-overlay')
-
-        // drawing all the cold bridge circles for this image
-        image.coldBridges.forEach(bridge => {
-            const circle = document.createElement('div')
-            circle.className = 'cold-bridge-circle'
-            circle.style.left = `${bridge.x}%`
-            circle.style.top = `${bridge.y}%`
-            circle.style.width = `${bridge.radius}px`
-            circle.style.height = `${bridge.radius}px`
-            overlay.appendChild(circle)
-        })
 
         // slapping the finished card onto the page
         AnalysedImagesList.appendChild(card)
@@ -791,93 +792,7 @@ const renderAnalysedImages = (images) => {
 }
 
 
-
-// this makes some pretend backend results from the current files + form data
-const createMockAnalysisResponse = () => {
-
-
-    // grab the temperatures from the very first image card to use for our mock math
-    const firstImage = currentThermalImages[0] || {}
-    const internalTemp = Number(firstImage.internalTemp) || 20
-    const externalTemp = Number(firstImage.externalTemp) || 5
-    const deltaT = Math.abs(internalTemp - externalTemp)
-
-    // this array will hold all the per-image results
-    const analysedImages = []
-
-    // looping through every uploaded image and giving it a pretend result
-    currentThermalImages.forEach((image, index) => {
-
-        // making a slightly different severity for each image so the graph looks alive
-        const severityIndex = Number((2.8 + (index * 0.9) + (deltaT * 0.12)).toFixed(1))
-        // making a pretend lowest temp based on the delta temp and severity
-        const lowestTemp = Number((internalTemp - (deltaT * 0.35) - (index * 0.7) - 1.8).toFixed(1))
-        // making a pretend average surface temp
-        const averageSurfaceTemp = Number((internalTemp - (deltaT * 0.18) - (index * 0.3)).toFixed(1))
-        // making a pretend error margin
-        const errorMargin = Number((0.4 + (index * 0.08)).toFixed(2))
-        // making a pretend psi value
-        const psiValue = Number((0.22 + (severityIndex * 0.04)).toFixed(2))
-        // making a pretend u value
-        const uValue = Number((1.1 + (severityIndex * 0.08)).toFixed(2))
-        // making a pretend confidence score
-        const confidence = Number((82 + (index * 3)).toFixed(0))
-
-        // pushing the pretend analysed result into the array
-        analysedImages.push({
-            id: image.id,
-            locationName: image.locationName,
-            previewUrl: image.previewUrl,
-            summary: severityIndex >= 5.5 ? 'Significant thermal bridging detected' : 'Moderate thermal bridging detected',
-            severityIndex,
-            lowestTemp: `${lowestTemp.toFixed(1)}°C`,
-            averageSurfaceTemp: `${averageSurfaceTemp.toFixed(1)}°C`,
-            errorMargin: `±${errorMargin.toFixed(2)}°C`,
-            psiValue: `${psiValue.toFixed(2)} W/mK`,
-            uValue: `${uValue.toFixed(2)} W/m²K`,
-            confidence: `${confidence}%`,
-            coldBridges: [
-                { x: 35 + (index * 8), y: 32 + (index * 6), radius: 90 - (index * 8) },
-                { x: 68 - (index * 5), y: 70 - (index * 4), radius: 46 + (index * 3) }
-            ]
-        })
-    })
-
-    // working out a few global result numbers from all the images
-    const lowestTempFound = Math.min(...analysedImages.map(image => Number(image.lowestTemp.replace('°C', ''))))
-    const averageSurfaceTempOverall = analysedImages.reduce((sum, image) => sum + Number(image.averageSurfaceTemp.replace('°C', '')), 0) / analysedImages.length
-    const averageSeverity = analysedImages.reduce((sum, image) => sum + image.severityIndex, 0) / analysedImages.length
-    const averagePsi = analysedImages.reduce((sum, image) => sum + Number(image.psiValue.replace(' W/mK', '')), 0) / analysedImages.length
-    const averageU = analysedImages.reduce((sum, image) => sum + Number(image.uValue.replace(' W/m²K', '')), 0) / analysedImages.length
-    const averageErrorMargin = analysedImages.reduce((sum, image) => sum + Number(image.errorMargin.replace('±', '').replace('°C', '')), 0) / analysedImages.length
-
-    // building the overall response object the rest of the ui expects
-    return {
-        success: true,
-        summary: averageSeverity >= 5.5 ? 'Cold bridge risk detected across the uploaded set' : 'Moderate cold bridge risk detected across the uploaded set',
-        generalStats: [
-            { label: 'Images Analysed', value: `${analysedImages.length}` },
-            { label: 'Lowest Temp Found', value: `${lowestTempFound.toFixed(1)}°C` },
-            { label: 'Average Surface Temp', value: `${averageSurfaceTempOverall.toFixed(1)}°C` },
-            { label: 'Internal vs External ΔT', value: `${deltaT.toFixed(1)}°C` }
-        ],
-        technicalStats: [
-            { label: 'Average Severity Index', value: averageSeverity.toFixed(1) },
-            { label: 'Average Error Margin', value: `±${averageErrorMargin.toFixed(2)}°C` },
-            { label: 'Est. Psi Value (Ψ)', value: `${averagePsi.toFixed(2)} W/mK` },
-            { label: 'Local U-Value Est.', value: `${averageU.toFixed(2)} W/m²K` },
-            { label: 'Confidence Range', value: `${analysedImages[0].confidence} to ${analysedImages[analysedImages.length - 1].confidence}` },
-            { label: 'Expert Note', value: 'Use measured dimensions and calibrated thermal data for final reporting.' }
-        ],
-        // leaving graphData empty on purpose for now because the real api will decide the title and data points later
-        graphData: null,
-        analysedImages
-    }
-}
-
-
-
-// this is where we would actually send the data to the backend later
+// this sends images and the data entered in the forms to the backend for processing
 const sendImagesForAnalysis = async () => {
 
     const form = new FormData();
@@ -889,8 +804,10 @@ const sendImagesForAnalysis = async () => {
         form.append('ext_temps', img.externalTemp);
         form.append('emissivities', 0.95);
         form.append('wall_heights', img.wallHeight);
-        form.append('camera_type', img.cameraType);
+        form.append('camera_types', img.cameraType);
     });
+
+    console.log(form);
 
     const resp = await fetch('http://localhost:8000/analyse-images/', {
         method: 'POST',
@@ -907,7 +824,7 @@ const sendImagesForAnalysis = async () => {
 
 // this collects per-image analysis data for the backend
 const collectAnalysisData = () => {
-    
+   
     const locations = currentThermalImages.map(img => img.locationName)
     const intAmbTemps = currentThermalImages.map(img => Number(img.internalTemp))
     const extTemps = currentThermalImages.map(img => Number(img.externalTemp))
@@ -916,7 +833,7 @@ const collectAnalysisData = () => {
     const wallHeights = currentThermalImages.map(img => Number(img.wallHeight))
     const cameraTypes = currentThermalImages.map(img => img.cameraType)
     const distances = currentThermalImages.map(img => img.distance)
-    
+   
     return {
         locations,
         intAmbTemps,
@@ -932,36 +849,62 @@ const collectAnalysisData = () => {
 
 // function to show the results when the backend sends them back
 const displayResults = (data) => {
+    const showAdvanced = ShowAdvancedInfoCheckbox.checked;
 
+    const API_BASE_URL = 'http://localhost:8000';
 
     // hiding the loading spinner because we are done thinking
     LoadingOverlay.style.display = 'none'
     // hiding the upload section so they cant upload another one yet
     UploadSection.classList.add('hidden')
 
-    // changing the main text to whatever the backend said the summary is
-    MainResultText.textContent = data.summary
+    // create analysed locations from API response
+    const analysedLocations = data.locations.map((location, idx) => ({
+        locationName: location,
+        psiValue: `${data.psis[idx].toFixed(2)} W/mK`,
+        severityIndex: data.psi_severities[idx],
+        errorMargin: `±${data.error_margins[idx].toFixed(2)} W/mK`,
+        plotUrl: `${API_BASE_URL}/${data.plots[idx]}?t=${Date.now()}`
+    }));
 
-    // shoving the html we generated into the general stats grid
-    GeneralStatsGrid.innerHTML = generateStatsHTML(data.generalStats)
+    // calculate overall stats
+    const averageSeverity = data.psi_severities.reduce((sum, sev) => sum + sev, 0) / data.psi_severities.length;
+    const averagePsi = data.psis.reduce((sum, psi) => sum + psi, 0) / data.psis.length;
+    const averageErrorMargin = data.error_margins.reduce((sum, err) => sum + err, 0) / data.error_margins.length;
 
-    // checking if the user wanted the advanced info at the top
-    if (ShowAdvancedInfoCheckbox.checked && data.technicalStats && data.technicalStats.length > 0) {
-        AdvancedResultsSection.classList.remove('hidden')
-        TechStatsGrid.innerHTML = generateStatsHTML(data.technicalStats)
-    } else {
-        AdvancedResultsSection.classList.add('hidden')
-        TechStatsGrid.innerHTML = ''
-    }
+    // set main result text
+    MainResultText.textContent = averageSeverity >= 5.5 ? 'Cold bridge risk detected across the uploaded set' : 'Moderate cold bridge risk detected across the uploaded set';
 
-    // drawing the graph from the backend response or showing the placeholder
-    renderApiGraph(data.graphData)
+    // general stats
+    GeneralStatsGrid.innerHTML = generateStatsHTML([
+        { label: 'Locations Analysed', value: `${analysedLocations.length}`, advanced: false},
+        { label: 'Average Severity Index', value: averageSeverity.toFixed(1), advanced: false},
+        { label: 'Average Psi Value', value: `${averagePsi.toFixed(2)} W/mK`, advanced: true},
+        { label: 'Average Error Margin', value: `±${averageErrorMargin.toFixed(2)} W/mK`, advanced: true}
+    ]);
 
-    // drawing the image cards from the backend response
-    renderAnalysedImages(data.analysedImages)
+    // tech stats (if any)
+    TechStatsGrid.innerHTML = '';
 
-    // finally showing the whole results section to the user
-    ResultsSection.style.display = 'block'
+    // render individual location results
+    renderAnalysedLocations(analysedLocations);
+
+    // render overall plots (severities, psis, frsis)
+    const overallPlots = data.plots.slice(data.locations.length);
+    const plotNames = ['Severity Plot', 'Psi Value Graph', 'FRSI Graph'];
+    document.getElementById('overallPlots').innerHTML = overallPlots.map((url, idx) => {
+        if(showAdvanced || plotNames[idx] != 'Psi Value Graph') {
+            return `<div class="overall-plot">
+            <h3>${plotNames[idx]}</h3>
+            <img src="${API_BASE_URL}/${url}?t=${Date.now()}" alt="${plotNames[idx]}" style="max-width: 100%; height: auto;">
+            </div>`;
+        } else {
+            return '';
+        }
+    }).join('');
+
+    // show results section
+    ResultsSection.style.display = 'block';
 }
 
 
@@ -1056,8 +999,8 @@ ResetBtn.addEventListener('click', () => {
     // resetting the graph section back to the placeholder
     GraphTitle.textContent = 'Graph output'
     GraphSubtitle.textContent = 'This area will plot whatever title and data points the API sends back.'
-    GraphPlaceholder.textContent = 'Waiting for API graph data.'
-    GraphPlaceholder.classList.remove('hidden')
+    // GraphPlaceholder.textContent = 'Waiting for API graph data.'
+    // GraphPlaceholder.classList.remove('hidden')
     GraphWrapper.classList.add('hidden')
 
     // hiding the advanced results section

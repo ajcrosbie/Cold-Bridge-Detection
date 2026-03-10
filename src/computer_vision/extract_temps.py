@@ -1,4 +1,4 @@
-
+import re
 import cv2
 import numpy as np
 import pytesseract
@@ -34,37 +34,56 @@ TOP_BOX_HIKMICRO = Box(139, 172, 9, 94)
 BOTTOM_BOX_HIKMICRO = Box(389, 422, 9, 94)
 MENU_BOX_HIKMICRO = Box(412, 459, 542, 629)
 MIN_MAX_BOX_HIKMICRO = Box(7, 89, 8, 125)
+EMISSIVITY_BOX_HIKMICRO = Box(444, 469, 10, 103)
 
-HIKMICRO_UI_BOXES = [OUTER_BAR_BOX_HIKMICRO, TOP_BOX_HIKMICRO, BOTTOM_BOX_HIKMICRO, MENU_BOX_HIKMICRO, MIN_MAX_BOX_HIKMICRO]
+HIKMICRO_UI_BOXES = [OUTER_BAR_BOX_HIKMICRO, TOP_BOX_HIKMICRO, BOTTOM_BOX_HIKMICRO, MENU_BOX_HIKMICRO, MIN_MAX_BOX_HIKMICRO, EMISSIVITY_BOX_HIKMICRO]
 
-TOP_BOX = None
-BOTTOM_BOX = None
-INNER_BAR_BOX = None
-UI_BOXES = None
 
-#TODO: Set this using master functionz
-FLIR = True
-
-if FLIR:
-    TOP_BOX = TOP_BOX_FLIR
-    BOTTOM_BOX = BOTTOM_BOX_FLIR
-    INNER_BAR_BOX = INNER_BAR_BOX_FLIR
-    UI_BOXES = FLIR_UI_BOXES
-else:
-    # assuming we're only adding Hikmicro
-    TOP_BOX = TOP_BOX_HIKMICRO
-    BOTTOM_BOX = BOTTOM_BOX_HIKMICRO
-    INNER_BAR_BOX = INNER_BAR_BOX_HIKMICRO
-    UI_BOXES = HIKMICRO_UI_BOXES
+def getBoxes(FLIR):
+    if FLIR:
+        TOP_BOX = TOP_BOX_FLIR
+        BOTTOM_BOX = BOTTOM_BOX_FLIR
+        INNER_BAR_BOX = INNER_BAR_BOX_FLIR
+        UI_BOXES = FLIR_UI_BOXES
+    else:
+        # assuming we're only adding Hikmicro
+        TOP_BOX = TOP_BOX_HIKMICRO
+        BOTTOM_BOX = BOTTOM_BOX_HIKMICRO
+        INNER_BAR_BOX = INNER_BAR_BOX_HIKMICRO
+        UI_BOXES = HIKMICRO_UI_BOXES
+    return TOP_BOX, BOTTOM_BOX, INNER_BAR_BOX, UI_BOXES 
 
 
 
+def find_text_float(img: np.ndarray) -> float:    
+    #convert to greyscale
+    if len(img.shape) == 3:
+        processed_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    else:
+        processed_img = img.copy()
+        
+    #scale up image to approx 30 px.
+    processed_img = cv2.resize(processed_img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
     
-def find_text_float(img:np.ndarray) ->  float:    
-    
-    text = pytesseract.image_to_string(img) # This might be crap but I have seen it before
+    # otsu's thresholding to get black/white pixels and invert for black text on white bg
+    _, processed_img = cv2.threshold(processed_img, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
-    temp = float(text.strip().replace("°C", "")) # More processing may be needed here fore more the non flir
+    # flag only allow digits and a decimal point and minus sign
+    custom_config = r'--oem 3 --psm 7 -c tessedit_char_whitelist=-0123456789.'
+    
+    text = pytesseract.image_to_string(processed_img, config=custom_config) 
+    
+    clean_text = re.sub(r'[^\d.-]', '', text)
+    
+    try:
+        temp = float(clean_text)
+        while temp > 40:
+            temp = temp / 10
+    except ValueError:
+        print(f"Warning: Could not convert '{clean_text}' to float. Original text was: '{text}'")
+        temp = 20.0 # toby plaster fix
+    
+    print(f"extracted temperature ={temp}")
     return temp
 
 
@@ -90,9 +109,9 @@ def extract_from_box(img:np.ndarray, box:Box) -> np.ndarray:
     return img[box.yt:box.yb,
               box.xl:box.xr]
 
-def image_to_temperature_map(img: np.ndarray) -> tuple[np.ndarray, float, float]:
+def image_to_temperature_map(img:np.ndarray, boxes) -> tuple[np.ndarray, float, float]:
     h, w, _ = img.shape
-
+    TOP_BOX, BOTTOM_BOX, INNER_BAR_BOX, _ = boxes
 
     top = extract_from_box(img, TOP_BOX)
     
