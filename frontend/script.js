@@ -23,8 +23,6 @@ const AdvancedResultsSection = document.getElementById('advancedResultsSection')
 const ShowAdvancedInfoCheckbox = document.getElementById('showAdvancedInfoCheckbox')
 
 
-//yare yare dazes
-
 
 
 // this is what keeps track of what the app is doing rn
@@ -33,9 +31,6 @@ let appState = 'idle'
 let currentThermalImages = []
 // this is for the graph once the api sends us some numbers back
 let apiGraphInstance = null
-
-// setting a fake delay of 2 seconds to make it feel like the backend is doing some real work
-const FAKE_NETWORK_DELAY = 2000
 // this is the list of file types we are happy with
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/tiff', 'image/tif']
 // this is the list of file extensions we are happy with
@@ -785,93 +780,7 @@ const renderAnalysedLocations = (locations) => {
 }
 
 
-
-//this makes some pretend backend results from the current files + form data
-const createMockAnalysisResponse = () => {
-
-
-    // grab the temperatures from the very first image card to use for our mock math
-    const firstImage = currentThermalImages[0] || {}
-    const internalTemp = Number(firstImage.internalTemp) || 20
-    const externalTemp = Number(firstImage.externalTemp) || 5
-    const deltaT = Math.abs(internalTemp - externalTemp)
-
-    // this array will hold all the per-image results
-    const analysedImages = []
-
-    // looping through every uploaded image and giving it a pretend result
-    currentThermalImages.forEach((image, index) => {
-
-        // making a slightly different severity for each image so the graph looks alive
-        const severityIndex = Number((2.8 + (index * 0.9) + (deltaT * 0.12)).toFixed(1))
-        // making a pretend lowest temp based on the delta temp and severity
-        const lowestTemp = Number((internalTemp - (deltaT * 0.35) - (index * 0.7) - 1.8).toFixed(1))
-        // making a pretend average surface temp
-        const averageSurfaceTemp = Number((internalTemp - (deltaT * 0.18) - (index * 0.3)).toFixed(1))
-        // making a pretend error margin
-        const errorMargin = Number((0.4 + (index * 0.08)).toFixed(2))
-        // making a pretend psi value
-        const psiValue = Number((0.22 + (severityIndex * 0.04)).toFixed(2))
-        // making a pretend u value
-        const uValue = Number((1.1 + (severityIndex * 0.08)).toFixed(2))
-        // making a pretend confidence score
-        const confidence = Number((82 + (index * 3)).toFixed(0))
-
-        // pushing the pretend analysed result into the array
-        analysedImages.push({
-            id: image.id,
-            locationName: image.locationName,
-            previewUrl: image.previewUrl,
-            summary: severityIndex >= 5.5 ? 'Significant thermal bridging detected' : 'Moderate thermal bridging detected',
-            severityIndex,
-            lowestTemp: `${lowestTemp.toFixed(1)}°C`,
-            averageSurfaceTemp: `${averageSurfaceTemp.toFixed(1)}°C`,
-            errorMargin: `±${errorMargin.toFixed(2)}°C`,
-            psiValue: `${psiValue.toFixed(2)} W/mK`,
-            uValue: `${uValue.toFixed(2)} W/m²K`,
-            confidence: `${confidence}%`,
-            coldBridges: [
-                { x: 35 + (index * 8), y: 32 + (index * 6), radius: 90 - (index * 8) },
-                { x: 68 - (index * 5), y: 70 - (index * 4), radius: 46 + (index * 3) }
-            ]
-        })
-    })
-
-    // working out a few global result numbers from all the images
-    const lowestTempFound = Math.min(...analysedImages.map(image => Number(image.lowestTemp.replace('°C', ''))))
-    const averageSurfaceTempOverall = analysedImages.reduce((sum, image) => sum + Number(image.averageSurfaceTemp.replace('°C', '')), 0) / analysedImages.length
-    const averageSeverity = analysedImages.reduce((sum, image) => sum + image.severityIndex, 0) / analysedImages.length
-    const averagePsi = analysedImages.reduce((sum, image) => sum + Number(image.psiValue.replace(' W/mK', '')), 0) / analysedImages.length
-    const averageU = analysedImages.reduce((sum, image) => sum + Number(image.uValue.replace(' W/m²K', '')), 0) / analysedImages.length
-    const averageErrorMargin = analysedImages.reduce((sum, image) => sum + Number(image.errorMargin.replace('±', '').replace('°C', '')), 0) / analysedImages.length
-
-    // building the overall response object the rest of the ui expects
-    return {
-        success: true,
-        summary: averageSeverity >= 5.5 ? 'Cold bridge risk detected across the uploaded set' : 'Moderate cold bridge risk detected across the uploaded set',
-        generalStats: [
-            { label: 'Images Analysed', value: `${analysedImages.length}` },
-            { label: 'Lowest Temp Found', value: `${lowestTempFound.toFixed(1)}°C` },
-            { label: 'Average Surface Temp', value: `${averageSurfaceTempOverall.toFixed(1)}°C` },
-            { label: 'Internal vs External ΔT', value: `${deltaT.toFixed(1)}°C` }
-        ],
-        technicalStats: [
-            { label: 'Average Severity Index', value: averageSeverity.toFixed(1) },
-            { label: 'Average Error Margin', value: `±${averageErrorMargin.toFixed(2)}°C` },
-            { label: 'Est. Psi Value (Ψ)', value: `${averagePsi.toFixed(2)} W/mK` },
-            { label: 'Local U-Value Est.', value: `${averageU.toFixed(2)} W/m²K` },
-            { label: 'Confidence Range', value: `${analysedImages[0].confidence} to ${analysedImages[analysedImages.length - 1].confidence}` },
-            { label: 'Expert Note', value: 'Use measured dimensions and calibrated thermal data for final reporting.' }
-        ],
-        // leaving graphData empty on purpose for now because the real api will decide the title and data points later
-        graphData: null,
-        analysedImages
-    }
-}
-
-
-
-// this is where we would actually send the data to the backend later
+// this sends images and the data entered in the forms to the backend for processing
 const sendImagesForAnalysis = async () => {
 
     const form = new FormData();
