@@ -17,7 +17,6 @@ const SelectedFilesList = document.getElementById('selectedFilesList')
 const AnalysedImagesList = document.getElementById('analysedImagesList')
 const GraphTitle = document.getElementById('graphTitle')
 const GraphSubtitle = document.getElementById('graphSubtitle')
-const GraphPlaceholder = document.getElementById('graphPlaceholder')
 const GraphWrapper = document.getElementById('graphWrapper')
 const ApiGraphCanvas = document.getElementById('apiGraphCanvas')
 const AdvancedResultsSection = document.getElementById('advancedResultsSection')
@@ -735,6 +734,12 @@ const renderAnalysedLocations = (locations) => {
     // looping over every analysed location the backend sent back
     locations.forEach(location => {
 
+        const filteredImages = currentThermalImages.filter((img) => 
+            img.locationName === location.locationName
+        )
+
+        const image = filteredImages[0]
+
         // making the main result card
         const card = document.createElement('div')
         card.className = 'analysed-image-card'
@@ -761,6 +766,11 @@ const renderAnalysedLocations = (locations) => {
                     <div class="stat-label">Average Error Margin</div>
                     <div class="stat-value">${location.errorMargin}</div>
                 </div>
+            </div>
+
+            <div class="analysed-image-preview-wrap">
+                <h5>Thermal Image</h5>
+                <img src="${image.previewUrl}" alt="${image.file.name}" class="selected-file-preview">
             </div>
 
             <div class="severity-plot-container">
@@ -1063,8 +1073,8 @@ ResetBtn.addEventListener('click', () => {
     // resetting the graph section back to the placeholder
     GraphTitle.textContent = 'Graph output'
     GraphSubtitle.textContent = 'This area will plot whatever title and data points the API sends back.'
-    GraphPlaceholder.textContent = 'Waiting for API graph data.'
-    GraphPlaceholder.classList.remove('hidden')
+    // GraphPlaceholder.textContent = 'Waiting for API graph data.'
+    // GraphPlaceholder.classList.remove('hidden')
     GraphWrapper.classList.add('hidden')
 
     // hiding the advanced results section
