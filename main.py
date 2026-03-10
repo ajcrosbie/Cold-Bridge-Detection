@@ -99,10 +99,14 @@ def analyse_images(
 
     psi_severities = [frsi_to_severity(frsi) for frsi in frsi_values]
 
+    # stores the paths to all plots which will be returned to frontend
     plot_paths = []
+    # append the path to every sensitivity plot
     for loc, img_list in location_dict.items():
+        # plot and append path to plot
         plot_paths.append(plot_sensitivities(img_list, location=loc))
 
+    # plot overall plots and append paths to them
     plot_paths.append(plot_severities(location_dict))
     plot_paths.append(plot_psis(location_dict))
     plot_paths.append(plot_frsis(location_dict)) 

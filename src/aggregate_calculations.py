@@ -16,24 +16,27 @@ def plot_psis_single_cb(images: list[Image], show=False) -> str:
     set of images as datapoints.
     
     :param images: list of Images ideally taken with different external temperatures
+    :param show: bool set to true if plot should be output to display, or false if saved to file
+    :return path: the path to the plot
     """
 
     path = f'{GRAPHPATH}singleImgPsi.png'
-    # Kind of useless as should just be a noisy horizontal line
 
+    # get psi value for every image
     exts = [i.ext for i in images]
     psis = get_psis(images)
 
+    # setup axes
     plt.title("Psi value against external temperature in K")
     plt.xlabel("External temperature, K")
     plt.ylabel("Psi-value")
-    # plt.scatter(exts, psis)
     
+    # fit line to psi values
     poly = np.polyfit(exts, psis, 1)
     line = np.polyval(poly, exts)    
 
+    # plot line with error bars
     errs = np.abs(line - psis)
-    # plt.plot(exts, np.polyval(poly, exts))
     plt.errorbar(exts, np.polyval(poly, exts), yerr=errs, capsize=5, ecolor="red")
 
     if show:
@@ -70,6 +73,7 @@ def get_frsis(images: list[Image]) -> np.ndarray:
     :param images: array of Images
     :return frsis: array of frsi values, one corresponding to each image
     """
+    # calculate frsi value for every image in input array
     frsis = np.array([value_calculation.calc_frsi(float(np.mean(img.cb_pix)), img.int_amb, img.ext) for img in images])
     
     return frsis
@@ -78,8 +82,12 @@ def plot_sensitivities(images: list[Image], location: str = "", show: bool =Fals
     """
     Plots sensitivity to external temperature and returns path to the image
     
-    :param images: Description
+    :param images: array of images of the same cold bridge
     :type images: list[Image]
+    :param location: name of the cold bridge location
+    :param show: bool set to true if plot should be output to display, or false if saved to file
+
+    :return path: the path to the plot
     """
 
     if len(images) == 1:
@@ -128,7 +136,9 @@ def rank_cbs_by_psi(cbs: dict[str, list[Image]]) -> list[tuple[str, float, float
     results = []
 
     for location, cb_images in cbs.items():
+        # calculate psi for every image in cold bridge
         psis = get_psis(cb_images)
+        # calculate mean and margin of error for the cb
         mean_psi, moe = calculate_psi_ci(psis)
 
         results.append((location, mean_psi, moe, psis)) # box plots can use all the data points
@@ -141,16 +151,27 @@ def plot_psis(cbs: dict[str, list[Image]], show: bool=False) -> str:
     """   
     Plots a box plot showing psi value for each cold bridge
     
-    :param cbs: Array of Image arrays. Each Image array corresponds to one suspected cold bridge
+    :param cbs: Dictionary mapping locations to arrays of Image for that location
+    :param show: bool set to true if plot should be displayed to screen, or false to write to file
+    :return path: the path to the plot
     """
+
     path = f'{GRAPHPATH}psis.png'
+
+    # rank cold bridges by psi value
+    # ranked is array of (location, mean_psi, moe, psi_array) tuples
     ranked = rank_cbs_by_psi(cbs)
+
+    #extract location and psi values from ranked
     locs = [cb[0] for cb in ranked]
     psis = [cb[3] for cb in ranked]
 
+    #set up plot
     plt.title("Psi value against location")
     plt.ylabel("Psi, W/mK")
     plt.xlabel("Location")
+
+    # x axes labels are the locations, each box plot is generated from the psi value array for the location
     plt.boxplot(psis, tick_labels=locs, vert=True)
 
     # either draw graph to display or save to file
@@ -164,21 +185,31 @@ def plot_psis(cbs: dict[str, list[Image]], show: bool=False) -> str:
 
 def plot_psi_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: bool =False, bar: bool = True) -> str:
     """
-    Plots box plot of containing the severity of each cold bridge in cbs, on a cale from 0 to 10,
+    Plots box plot of containing the severity of each cold bridge in cbs, on a scale from 0 to 10,
     By default, 10 is most severe and 0 being ideal
+    Severity is calculated based on the psi value rather than frsi
 
-    :param cbs: Each Image array corresponds to one suspected cold bridge
+    :param cbs: Dictionary mapping locations to arrays of Images for that location
     :param high_worse: (boolean) saying if high severity is bad or good
-    
+    :param show: bool set to true if plot should be displayed to screen, or false to write to file
+    :param bar: bool set to true if the plot should be abar graph, false for a scatter
+
+    :return path: the path to the plot
     """
+
     path = f'{GRAPHPATH}severities.png'
+
+    # ranked is array of (location, mean_psi, moe, psi_array) tuples
     ranked = rank_cbs_by_psi(cbs)
+    # extract locations
     locs = [cb[0] for cb in ranked]
 
     # convert all psi values to severities
     sevs = [psi_to_severity(cb[1], high_worse) for cb in ranked]
 
+    # set up plot
     plt.title("Severity rating by location")
+    # severity is capped between 0 and 10
     plt.ylim(0, 10)
     plt.ylabel(f"Severity rating (higher {"worse" if high_worse else "better"})")
     plt.xlabel("Location")
@@ -193,10 +224,10 @@ def plot_psi_severities(cbs: dict[str, list[Image]], high_worse: bool = True, sh
 
         plt.scatter(np.arange(len(sevs)), sevs)
 
+    # either display plot or save to file
     if show:
         plt.show()
-    else:
-        
+    else:        
         plt.savefig(path)
         plt.close()
 
@@ -204,23 +235,33 @@ def plot_psi_severities(cbs: dict[str, list[Image]], high_worse: bool = True, sh
 
 def plot_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: bool =False, bar: bool = True) -> str:
     """
-    Plots box plot of containing the severity of each cold bridge in cbs, on a cale from 0 to 10,
-    By default, 10 is most severe and 0 being ideal
+    Plots box plot of containing the severity of each cold bridge in cbs, on a scale from 0 to 10,
+    By default, 10 is most severe and 0 being ideal.
+    Severity is calculated based on frsi
 
-    :param cbs: Each Image array corresponds to one suspected cold bridge
+    :param cbs: Dictionary mapping locations to arrays of Images for that location
     :param high_worse: (boolean) saying if high severity is bad or good
-    
+    :param show: bool set to true if plot should be displayed to screen, or false to write to file
+    :param bar: bool set to true if the plot should be abar graph, false for a scatter
+
+    :return path: the path to the plot    
     """
     path = f'{GRAPHPATH}severities.png'
+
+    # extract locations
     locs = list(cbs.keys())
-    frsis = []
-    
+
+    frsis = []    
     for loc in locs:
+        # calculate the mean frsi value for loc and append to frsis
         frsis.append(np.mean(get_frsis(cbs[loc])))
 
+    # convert frsis to severities
     sevs = [frsi_to_severity(f, high_worse) for f in frsis]
 
+    # set up plot
     plt.title("Severity rating by location")
+    # severity capped between 0 and 10
     plt.ylim(0, 10)
     plt.ylabel(f"Severity rating (higher {"worse" if high_worse else "better"})")
     plt.xlabel("Location")
@@ -235,10 +276,10 @@ def plot_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: 
 
         plt.scatter(np.arange(len(sevs)), sevs)
 
+    # either display plot or save to file
     if show:
         plt.show()
-    else:
-        
+    else:        
         plt.savefig(path)
         plt.close()
 
@@ -248,20 +289,25 @@ def plot_frsis(cbs: dict[str, list[Image]], show: bool =False) -> str:
     """
     Plots box plot of frsi value for each cold bridge in cbs
 
-    :param cbs: array of arrays of images corresponding to the same cold bridge
+    :param cbs: Dictionary mapping locations to arrays of Image for that location
     """
     path = f'{GRAPHPATH}frsis.png'
+
+    # extract locations from cbs
     locs = list(cbs.keys())
 
-    # calculates frsi for every image in 2d array cbs
+    # calculates frsi for every image in cbs.values
+    # stores results in 2D array with one Image array for each location
     frsis = [[value_calculation.calc_frsi(float(np.mean(img.cb_pix)), img.int_amb, img.ext) 
               for img in cb_images] 
              for cb_images in cbs.values()]
 
+    # set up plot
     plt.title("Frsi value by location")
     plt.ylabel("Frsi")
     plt.xlabel("Location")
 
+    # draw boxplot
     plt.boxplot(frsis, tick_labels=locs, vert=True)
 
     if show:
@@ -278,6 +324,7 @@ def psi_to_severity(psi: float, high_worse: bool = True) -> float:
     By default high values are more severe
     
     :param psi: Psi value (W/mK)
+    :param high_worse: (boolean) saying if high severity is bad or good
     :return: ranking from 0-10
     """
 
@@ -288,9 +335,10 @@ def psi_to_severity(psi: float, high_worse: bool = True) -> float:
     # trim psi to be in this range
     psi = min(psi_high, max(psi, psi_low))
 
+    # minimum severity 0.5 so that it is actually visible on any plots
     sev = 0.5 + (psi - psi_low) * 9.5 / (psi_high-psi_low)
 
-    # flip severity if high_worse=False
+    # flip severity if high_worse==False
     return sev if high_worse else 10 - sev
 
 def frsi_to_severity(frsi: float, high_worse: bool = True) -> float:
@@ -299,6 +347,8 @@ def frsi_to_severity(frsi: float, high_worse: bool = True) -> float:
     By default high values are more severe
     
     :param frsi: frsi value 
+    :param high_worse: (boolean) saying if high severity is bad or good
+
     :return: ranking from 0-10
     """
 
@@ -309,7 +359,8 @@ def frsi_to_severity(frsi: float, high_worse: bool = True) -> float:
     # trim psi to be in this range
     frsi = min(frsi_high, max(frsi, frsi_low))
 
-    sev = 10 - (frsi - frsi_low) * 9 / (frsi_high - frsi_low)
+    # minimum severity 0.5 so that it is actually visible on any plots
+    sev = 10 - (frsi - frsi_low) * 9.5 / (frsi_high - frsi_low)
 
     # flip severity if high_worse=False
     return sev if high_worse else 10 - sev
@@ -324,6 +375,7 @@ def calculate_psi_ci(psis: np.ndarray, confidence_level: float = 0.95) -> tuple[
     """
     n = len(psis)
 
+    # margin of error obviously 0 for only 1 data point
     if n < 2:
         return (float(np.mean(psis)), 0.0)
     

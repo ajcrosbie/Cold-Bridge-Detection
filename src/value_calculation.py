@@ -13,7 +13,7 @@ def calc_sensitivity(ext_sfc_temp: dict[float, float]) -> float:
 
 
     Returns:
-    sensitivity (float): slope of external temperature compared to surface temperature of cold bridge
+    sensitivity (float): gradient of slope of external temperature compared to surface temperature of cold bridge
     """
 
     # extract into np arrays
@@ -60,7 +60,6 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     ext (float): external temperature (in celcius)
     t_wall (float): surrounding surface temperature of non-cb wall (in celcius)
     pix_temps (np.ndarray): temperatures of each pixel in cold bridge (in celcius)
-    Should be in K, but all are received in Celcius, so convert at
     epsilon (float): surface emissivity
     lx (float): pixel length
     lch (float): characteristic length in the vertical direction (total height of wall being analysed)
@@ -150,6 +149,13 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     return float(psi)
 
 def calc_pixel_length(camera: str, distance: float = 2.0) -> float:
+    """
+    Calculates the length of a single pixel in an image
+
+    :param camera: the type of camera
+    :param distance: the distance from the wall in m that the photo was taken, default 2
+    """
+    # known data about supported cameras
     camera_profiles = {
         "FLIR E40bx": {"fov": 25.0, "res": 320},
         "HIKMICRO M11W": {"fov": 37.2, "res": 640}
@@ -157,7 +163,6 @@ def calc_pixel_length(camera: str, distance: float = 2.0) -> float:
 
     if camera not in camera_profiles:
         raise ValueError(f"Unsupported camera type: '{camera}'. Please select from: {list(camera_profiles.keys())}")
-
 
     horizontal_fov = camera_profiles[camera]["fov"]
     horizontal_res = camera_profiles[camera]["res"]
