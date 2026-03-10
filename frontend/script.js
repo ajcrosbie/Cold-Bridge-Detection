@@ -22,6 +22,7 @@ const ApiGraphCanvas = document.getElementById('apiGraphCanvas')
 const AdvancedResultsSection = document.getElementById('advancedResultsSection')
 const ShowAdvancedInfoCheckbox = document.getElementById('showAdvancedInfoCheckbox')
 
+const BACKENDTARGET = "localhost"
 
 
 
@@ -806,8 +807,8 @@ const sendImagesForAnalysis = async () => {
         form.append('wall_heights', img.wallHeight);
         form.append('camera_types', img.cameraType);
     });
-
-    const resp = await fetch('http://localhost:8000/analyse-images/', {
+    
+    const resp = await fetch('http://'+ BACKENDTARGET + ':8000/analyse-images/', {
         method: 'POST',
         body: form
     });
@@ -849,7 +850,7 @@ const collectAnalysisData = () => {
 const displayResults = (data) => {
     const showAdvanced = ShowAdvancedInfoCheckbox.checked;
 
-    const API_BASE_URL = 'http://localhost:8000';
+    const API_BASE_URL = 'http://'+BACKENDTARGET+':8000';
 
     // hiding the loading spinner because we are done thinking
     LoadingOverlay.style.display = 'none'

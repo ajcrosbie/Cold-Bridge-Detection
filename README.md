@@ -30,9 +30,13 @@ to run the server
 ```
 fastapi run main.py
 ```
+The URL/IP of the server will need to be programmed into the script.js file.
+Specifically the variable "BACKENDTARGET" will need to be set to some identifer for the server.
+
 
 
 There also needs to be a public webpage that the users can interact with. The contents of this webpage can be found in /frontend.
 
+
 # Challenges
-It is also advised that a full penetration test is completed before actually being deployed to the internet. Because
+It is also advised that a full penetration test is completed before actually being deployed to the internet.
