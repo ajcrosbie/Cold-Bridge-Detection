@@ -1,9 +1,10 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
-from PIL import Image as PILImage
 from src.image import Image
 from src.aggregate_calculations import *
+import numpy as np
+import cv2
 import os
 
 app = FastAPI()
@@ -47,12 +48,14 @@ def analyse_images(
     location_dict = {}
 
     for idx, file in enumerate(files):
-        # Load PIL image directly from memory
-        pil_image = PILImage.open(file.file).convert("RGB")
+        # Read file bytes and decode them directly into an OpenCV-ready BGR NumPy array
+        contents = file.file.read()
+        img_np = np.frombuffer(contents, np.uint8)
+        img_cv2 = cv2.imdecode(img_np, cv2.IMREAD_COLOR)
 
         # Create Image object
         img_obj = Image(
-            pil_image,
+            img_cv2,
             None,
             None,
             int_amb_temps[idx],
