@@ -850,7 +850,7 @@ const displayResults = (data) => {
         locationName: location,
         psiValue: `${data.psis[idx].toFixed(2)} W/mK`,
         severityIndex: data.psi_severities[idx],
-        errorMargin: `±${data.error_margins[idx].toFixed(2)}°C`,
+        errorMargin: `±${data.error_margins[idx].toFixed(2)} W/mK`,
         plotUrl: `${API_BASE_URL}/${data.plots[idx]}`
     }));
 
@@ -867,7 +867,7 @@ const displayResults = (data) => {
         { label: 'Locations Analysed', value: `${analysedLocations.length}` },
         { label: 'Average Severity Index', value: averageSeverity.toFixed(1) },
         { label: 'Average Psi Value', value: `${averagePsi.toFixed(2)} W/mK` },
-        { label: 'Average Error Margin', value: `±${averageErrorMargin.toFixed(2)}W/mK` }
+        { label: 'Average Error Margin', value: `±${averageErrorMargin.toFixed(2)} W/mK` }
     ]);
 
     // tech stats (if any)
