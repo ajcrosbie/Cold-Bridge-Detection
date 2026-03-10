@@ -17,7 +17,7 @@ def plot_psis_single_cb(images: list[Image], show=False) -> str:
     """
 
     path = f'{GRAPHPATH}singleImgPsi.png'
-#    Kind of useless as should just be a noisy horizontal line
+    # Kind of useless as should just be a noisy horizontal line
 
     exts = [i.ext for i in images]
     psis = get_psis(images)

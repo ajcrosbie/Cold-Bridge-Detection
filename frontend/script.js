@@ -786,7 +786,7 @@ const renderAnalysedLocations = (locations) => {
 
 
 
-// this makes some pretend backend results from the current files + form data
+//this makes some pretend backend results from the current files + form data
 const createMockAnalysisResponse = () => {
 
 
