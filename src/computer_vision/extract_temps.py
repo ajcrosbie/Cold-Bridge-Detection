@@ -39,7 +39,7 @@ EMISSIVITY_BOX_HIKMICRO = Box(444, 469, 10, 103)
 HIKMICRO_UI_BOXES = [OUTER_BAR_BOX_HIKMICRO, TOP_BOX_HIKMICRO, BOTTOM_BOX_HIKMICRO, MENU_BOX_HIKMICRO, MIN_MAX_BOX_HIKMICRO, EMISSIVITY_BOX_HIKMICRO]
 
 
-def getBoxes(FLIR):
+def getBoxes(FLIR: bool) -> tuple[Box, Box, Box, list[Box]]:
     if FLIR:
         TOP_BOX = TOP_BOX_FLIR
         BOTTOM_BOX = BOTTOM_BOX_FLIR
@@ -123,7 +123,7 @@ def extract_from_box(img:np.ndarray, box:Box) -> np.ndarray:
     return img[box.yt:box.yb,
               box.xl:box.xr]
 
-def image_to_temperature_map(img:np.ndarray, boxes) -> tuple[np.ndarray, float, float]:
+def image_to_temperature_map(img:np.ndarray, boxes: tuple[Box, Box, Box, list[Box]]) -> tuple[np.ndarray, float, float]:
     """
     Load the argument ``image_path`` as an array representing the BGR image. Use the temperature bar present in the 
     thermal image to convert the BGR image into a 2D array of the temperature image. 

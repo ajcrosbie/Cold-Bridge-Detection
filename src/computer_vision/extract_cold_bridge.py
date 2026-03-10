@@ -25,7 +25,7 @@ def clean_mask(mask: np.ndarray) -> np.ndarray:
     return mask
 
 
-def detect_cold_mask(t_min: float, t_max: float, threshold: float, temp_img: np.ndarray, UI_BOXES) -> np.ndarray:
+def detect_cold_mask(t_min: float, t_max: float, threshold: float, temp_img: np.ndarray, UI_BOXES: list[Box]) -> np.ndarray:
     """
     Create a mask to include the coldest regions of the image and exclude all other regions. Additionally exclude UI 
     components from the mask.
@@ -102,7 +102,7 @@ def find_bridge_from_mask(mask: np.ndarray, want_rectangle: bool = True) -> Box:
     return Box(bridge_y, bridge_y + bridge_h, bridge_x, bridge_x + bridge_w)
 
 
-def find_bridge_from_img(t_min: float, t_max: float, temp_img: np.ndarray, UI_BOXES) -> np.ndarray:
+def find_bridge_from_img(t_min: float, t_max: float, temp_img: np.ndarray, UI_BOXES: list[Box]) -> Box:
     """
     Find the best candidate cold bridge region of the image ``temp_img``. This is done by iteratively changing the
     threshold temperature to find a mask of the image, and detecting connected components from the mask.
@@ -158,7 +158,7 @@ def draw_bridge(image: np.ndarray, bridge: Box) -> np.ndarray:
     return output
 
 
-def find_mean(temp_img: np.ndarray, bridge: Box, UI_BOXES) -> float:
+def find_mean(temp_img: np.ndarray, bridge: Box, UI_BOXES: list[Box]) -> float:
     """
     Find the mean temperature in the argument ``temp_img``, excluding the UI components and the cold bridge. The aim is
     to get a good approximation of the surrounding temperature.
