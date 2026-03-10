@@ -45,7 +45,7 @@ def detect_cold_mask(t_min: float, t_max: float, threshold: float, temp_img: np.
     upper_threshold_temp = t_min + (t_max - t_min) * threshold
     
     # The aim is to create a mask that includes the temperatures in the lowest 20% of the temperature bar.
-    h, w, _ = temp_img.shape
+    h, w = temp_img.shape
 
     mask = np.zeros((h, w), dtype=np.uint8)
 
