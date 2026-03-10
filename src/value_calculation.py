@@ -69,6 +69,7 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     psi (float): psi-value
     """
     print(f"pix_temps={pix_temps}, min = {np.min(pix_temps)}, max = {np.max(pix_temps)}")
+    print(f"int_amb[={int_amb}, ext={ext}, t_wall={t_wall}, epsilon={epsilon}, lx={lx}, lch={lch}")
     # TODO: MAKE NEATER
     # converting all celcius temps we receive to kelvin
     int_amb = int_amb + 273.15
@@ -124,21 +125,34 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     
     # calculate uniform baseline heat flow per pixel (qxu)
     qconv_u = lx * hcx_u * (int_amb - t_wall)
-    qrad_u = lx * hrx_u * (int_amb - t_wall) # this evaluates to 0, as expected for no temp difference
+    qrad_u = lx * hrx_u * (int_amb - t_wall) 
     qxu = qconv_u + qrad_u 
 
     # calculate thermal bridge heat flow per pixel
     qxtb = qx - qxu
 
     # calculate total thermal bridge heat flow
-    # heat loss along a line
-    qtb = np.mean(np.sum(qxtb, axis=0))
+    # heat loss along a line 
+
+    var_x = np.var(np.mean(pix_temps, axis=0)) 
+    var_y = np.var(np.mean(pix_temps, axis=1))
+
+    if var_x < var_y:
+        # bigger vertical variance = horizontal cb
+        # sum horizontally
+        qtb = np.mean(np.sum(qxtb, axis=1))
+        print("summed horizontally")
+    else:
+        # bigger horizontal variance = vertical cb
+        # sum vertically
+        qtb = np.mean(np.sum(qxtb, axis=0))
+        print("summed veritcally")
 
     if int_amb == ext:
         return 0.0  # how do we want to handle this its an invalid input tbh
     # calculate psi value
     psi = qtb / (int_amb - ext)
-
+    print(f"psi={psi}")
     return float(psi)
 
 def calc_pixel_length(camera: str, distance: float = 2.0) -> float:
