@@ -87,8 +87,8 @@ def plot_sensitivities(images: list[Image], location: str = "", show: bool =Fals
     sens, intercept = np.polyfit(exts, cb_temps, 1)
  
     plt.title("Internal cold bridge surface temperature against external temperature")
-    plt.xlabel("External air temp/K")
-    plt.ylabel("Surface temp/K")
+    plt.xlabel("External air temp/°C")
+    plt.ylabel("Surface temp/°C")
     with open("Backendlogs.txt", "a") as f:
 
         f.writelines(str(exts))
