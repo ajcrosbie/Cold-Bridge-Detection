@@ -67,13 +67,16 @@
                     <h3 id="graphTitle">Graph output</h3>
                     <p id="graphSubtitle">This area will plot whatever title and data points the API sends back.</p>
                 </div>
-                <div class="graph-placeholder" id="graphPlaceholder">
-                    Waiting for API graph data.
+                <div class="overall-plots-section" id="overallPlots">
+                    <div class="section-heading-row">
+                        <h3>Overall Analysis Plots</h3>
+                        <p>Graphs showing severity, psi values, and FRSI across all images.</p>
+                    </div>
                 </div>
                 <div class="graph-wrapper hidden" id="graphWrapper">
                     <canvas id="apiGraphCanvas"></canvas>
                 </div>
-            </div>
+            </div>            
 
             <div class="advanced-results-section hidden" id="advancedResultsSection">
                 <div class="section-heading-row">
@@ -91,12 +94,7 @@
                 <div id="analysedImagesList" class="analysed-images-list"></div>
             </div>
 
-            <div class="overall-plots-section" id="overallPlots">
-                <div class="section-heading-row">
-                    <h3>Overall Analysis Plots</h3>
-                    <p>Graphs showing severity, psi values, and FRSI across all images.</p>
-                </div>
-            </div>
+            
 
             <button id="resetBtn" class="btn btn-primary" style="margin-top: 30px;">Analyse Another Set</button>
         </div>
