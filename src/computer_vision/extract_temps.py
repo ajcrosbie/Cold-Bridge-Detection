@@ -92,12 +92,7 @@ def extract_from_box(img:np.ndarray, box:Box) -> np.ndarray:
     return img[box.yt:box.yb,
               box.xl:box.xr]
 
-def image_to_temperature_map(image_path: str, boxes) -> tuple[np.ndarray, float, float]:
-
-    img = cv2.imread(image_path)
-    if img is None:
-        raise ValueError("Image not loaded")
-
+def image_to_temperature_map(img: np.ndarray, boxes) -> tuple[np.ndarray, float, float]:
     h, w, _ = img.shape
     TOP_BOX, BOTTOM_BOX, INNER_BAR_BOX, _ = boxes
 

@@ -12,15 +12,14 @@ from src.computer_vision.imageRunnner import run_images
 import numpy as np
 from src.value_calculation import calc_pixel_length
 import logging
-
+import numpy as np
+import cv2
+ 
 logger = logging.getLogger("uvicorn.error")
 logger.setLevel(logging.INFO)
 
 
 app = FastAPI()
-
-UPLOAD_DIR = Path("uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
 
 app.add_middleware(
     CORSMiddleware,
@@ -54,24 +53,6 @@ def analyse_images(
     with open("Backendlogs.txt", "a") as f:
         f.write("Request received\n")
 
-    if UPLOAD_DIR.exists():
-        shutil.rmtree(UPLOAD_DIR)
-    UPLOAD_DIR.mkdir(exist_ok=True)
-
-    file_paths: list[Path] = []
-    
-    for file in files:
-        # create unique filename to avoid collisions
-        ext = Path(file.filename).suffix
-        unique_name = f"{uuid4().hex}{ext}"
-        file_path = UPLOAD_DIR / unique_name
-        
-        # save file to disk
-        with open(file_path, "wb") as f:
-            shutil.copyfileobj(file.file, f)
-        
-        file_paths.append(file_path)
-
     # Validate lengths
     if not (len(files) == len(locations) == len(int_amb_temps) == len(ext_temps) == len(emissivities)
             == len(wall_heights) == len(camera_types)):
@@ -81,10 +62,14 @@ def analyse_images(
     location_dict = {}
 
     for idx, file in enumerate(files):
+        # Read file bytes and decode them directly into an OpenCV-ready BGR NumPy array
+        contents = file.file.read()
+        img_np = np.frombuffer(contents, np.uint8)
+        img_cv2 = cv2.imdecode(img_np, cv2.IMREAD_COLOR)
 
         # Create Image object
         img_obj = Image(
-            None,
+            img_cv2,
             None,
             None,
             int_amb_temps[idx],
@@ -100,13 +85,13 @@ def analyse_images(
             location_dict[loc] = []
         location_dict[loc].append(img_obj)
 
-    # Process all images
-    processed_results = run_images(file_paths, camera_types)
-
-    # Collect all images in the order they were processed
+    # Collect all images in the order they were received
     all_images = []
     for img_list in location_dict.values():
         all_images.extend(img_list)
+    
+    # Process all images
+    processed_results = run_images([i.image for i in all_images], camera_types)
 
     # Map processed results back to Image objects
     for idx, img in enumerate(all_images):
@@ -132,13 +117,7 @@ def analyse_images(
     plot_paths.append(plot_frsis(location_dict)) 
 
     print("List lengths equal: " + str(len(psi_lists)==len(psi_severities)==len(error_margins)))
-
-    # Clean up uploaded files
-    for file_path in file_paths:
-        try:
-            file_path.unlink()
-        except OSError:
-            pass  # Ignore if file already deleted or inaccessible
+         
     print( {
         "locations": list(location_dict.keys()),
         "psis": psi_values,
