@@ -232,13 +232,13 @@ def psi_to_severity(psi: float, high_worse: bool = True) -> float:
     """
 
     # psi values typically range from 0.04 - 0.48 with lower being better.
-    psi_low = 0.04
-    psi_high = 0.48
+    psi_low = 0.0
+    psi_high = 0.5
 
     # trim psi to be in this range
     psi = min(psi_high, max(psi, psi_low))
 
-    sev = (psi - psi_low) * 10 / (psi_high-psi_low)
+    sev = 0.5 + (psi - psi_low) * 9.5 / (psi_high-psi_low)
 
     # flip severity if high_worse=False
     return sev if high_worse else 10 - sev
