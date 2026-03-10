@@ -68,7 +68,7 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     Returns:
     psi (float): psi-value
     """
-    print(f"pix_temps={pix_temps}")
+    print(f"pix_temps={pix_temps}, min = {np.min(pix_temps)}, max = {np.max(pix_temps)}")
     # TODO: MAKE NEATER
     # converting all celcius temps we receive to kelvin
     int_amb = int_amb + 273.15

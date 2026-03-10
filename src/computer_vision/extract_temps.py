@@ -55,19 +55,33 @@ def getBoxes(FLIR):
 
 
 
+def find_text_float(img: np.ndarray) -> float:    
+    #convert to greyscale
+    if len(img.shape) == 3:
+        processed_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    else:
+        processed_img = img.copy()
+        
+    #scale up image to approx 30 px.
+    processed_img = cv2.resize(processed_img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
     
-def find_text_float(img:np.ndarray) ->  float:    
-    custom_config = r'--oem 3 --psm 8 -c tessedit_char_whitelist=-0123456789.'
-    # -c tessedit_char_whitelist=...: only allow digits and a period and minus sign
-    text = pytesseract.image_to_string(img, config=custom_config) # This might be crap but I have seen it before
-    # remove all chars not a digit or point
-    clean_text = re.sub(r'[^\d.]', '', text)
+    # otsu's thresholding to get black/white pixels and invert for black text on white bg
+    _, processed_img = cv2.threshold(processed_img, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    # flag only allow digits and a decimal point and minus sign
+    custom_config = r'--oem 3 --psm 7 -c tessedit_char_whitelist=-0123456789.'
+    
+    text = pytesseract.image_to_string(processed_img, config=custom_config) 
+    
+    clean_text = re.sub(r'[^\d.-]', '', text)
+    
     try:
         temp = float(clean_text)
     except ValueError:
-        print(f"Warning: Could not convert '{clean_text}' to float. Original text: '{text}'")
+        print(f"Warning: Could not convert '{clean_text}' to float. Original text was: '{text}'")
         temp = 20.0 # toby plaster fix
-
+    
+    print(f"extracted temperature ={temp}")
     return temp
 
 
