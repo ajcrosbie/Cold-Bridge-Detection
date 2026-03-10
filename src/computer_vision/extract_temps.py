@@ -88,6 +88,21 @@ def find_text_float(img: np.ndarray) -> float:
 
 
 def make_colour_to_temp_map(t_min: float, t_max:float, bar:np.ndarray) -> KNeighborsRegressor:
+    """
+    Return a Regressor object to convert colours into temperatures, using the temperature bar ``bar``.
+
+    Parameters:
+    t_min (float): The minimum temperature in the image.
+
+    t_max (float): The maximum temperature in the image.
+
+    bar (np.ndarray): A 3D numpy array which is a crop of the temperature bar present in the thermal image.
+
+    Returns:
+    knn_model (sklearn.neighbors.KNeighborsRegressor): A K-Nearest-Neighbours regression model used to find the temperature
+    to map a given BGR value to.
+    """
+
     known_colours = []
     known_temps = []
     bar_h, bar_w, _ = bar.shape
@@ -110,6 +125,21 @@ def extract_from_box(img:np.ndarray, box:Box) -> np.ndarray:
               box.xl:box.xr]
 
 def image_to_temperature_map(img:np.ndarray, boxes) -> tuple[np.ndarray, float, float]:
+    """
+    Load the argument ``image_path`` as an array representing the BGR image. Use the temperature bar present in the 
+    thermal image to convert the BGR image into a 2D array of the temperature image. 
+
+    Parameters:
+    image_path (PathLike): The path to the thermal image to be loaded.
+
+    Returns:
+    (tuple[np.ndarray, float, float]): The first element of the tuple contains a 2D numpy array of datatype float64,
+    where each value is the temperature of the corresponding pixel in the loaded argument image.
+
+    The second element of the tuple is the minimum temperature in the image.
+
+    The third element is the maximum temperature in the image.
+    """
     h, w, _ = img.shape
     TOP_BOX, BOTTOM_BOX, INNER_BAR_BOX, _ = boxes
 
