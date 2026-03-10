@@ -8,6 +8,8 @@ import os
 # path to the folder in which any plots will be saved
 GRAPHPATH = "plots/"
 
+
+# syncs plot files to disk so that the frontend always fetches the right plots
 def sync_file(path: str):
     with open(path, "r+b") as f:
         os.fsync(f.fileno())
