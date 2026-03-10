@@ -1,13 +1,9 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
-from PIL import Image as PILImage
 from src.image import Image
 from src.aggregate_calculations import *
 import os
-from pathlib import Path
-import shutil
-from uuid import uuid4
 from src.computer_vision.imageRunnner import run_images
 import numpy as np
 from src.value_calculation import calc_pixel_length
