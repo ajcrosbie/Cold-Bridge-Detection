@@ -56,11 +56,11 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     Ideally can be mapped over np arrays of these values and then an average taken across all time points.
 
     Parameters:
-    int_amb (float): internal ambient temperature
-    ext (float): external temperature
-    t_wall (float): surrounding surface temperature of non-cb wall
-    pix_temps (np.ndarray): temperatures of each pixel in cold bridge
-    Should be in K.
+    int_amb (float): internal ambient temperature (in celcius)
+    ext (float): external temperature (in celcius)
+    t_wall (float): surrounding surface temperature of non-cb wall (in celcius)
+    pix_temps (np.ndarray): temperatures of each pixel in cold bridge (in celcius)
+    Should be in K, but all are received in Celcius, so convert at the start
     epsilon (float): surface emissivity
     lx (float): pixel length
     lch (float): characteristic length in the vertical direction (total height of wall being analysed)
@@ -68,6 +68,14 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     Returns:
     psi (float): psi-value
     """
+
+    # TODO: MAKE NEATER
+    # converting all celcius temps we receive to kelvin
+    int_amb = int_amb + 273.15
+    ext = ext + 273.15
+    t_wall = t_wall + 273.15
+    pix_temps = pix_temps + 273.15
+
 
     # defining constants
     # thermal conductivity of air in W / (m.K) - changes with internal ambient temperature at constant pressure which we can assume
