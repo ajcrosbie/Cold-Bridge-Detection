@@ -92,7 +92,7 @@ def extract_from_box(img:np.ndarray, box:Box) -> np.ndarray:
     return img[box.yt:box.yb,
               box.xl:box.xr]
 
-def image_to_temperature_map(img: np.ndarray, boxes) -> tuple[np.ndarray, float, float]:
+def image_to_temperature_map(img:np.ndarray, boxes) -> tuple[np.ndarray, float, float]:
     h, w, _ = img.shape
     TOP_BOX, BOTTOM_BOX, INNER_BAR_BOX, _ = boxes
 

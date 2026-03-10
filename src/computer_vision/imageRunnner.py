@@ -3,7 +3,7 @@ from .extract_temps import *
 
 
 
-def run_images(imgs:list[np.ndarray], FLIR:list[str]) -> list[tuple[np.ndarray, float]]:
+def run_images(imgs: list[np.ndarray], FLIR: list[str]) -> list[tuple[np.ndarray, float]]:
     l = []
     for i in range(len(imgs)):
         boxes = getBoxes(FLIR[i]== "FLIR E40bx")
