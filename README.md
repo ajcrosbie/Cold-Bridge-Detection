@@ -15,7 +15,7 @@ detecting cold bridges
 
 run:
 ```bash
-pip install numpy matplotlib pytesseract scikit-learn opencv-python scipy dataclasses fastapi
+pip install numpy matplotlib pytesseract scikit-learn opencv-python scipy dataclasses "fastapi[standard]"
 ```
 
 
