@@ -98,11 +98,13 @@ def analyse_images(
     # float[][] of psi values for each image for each cold bridge
     psi_lists = [get_psis(img_list).tolist() for img_list in location_dict.values()]
 
+    frsi_values = [np.mean(get_frsis(img_list).tolist()) for img_list in location_dict.values()]
+
     # calculate error margins for each cold bridge
     psi_values = [calculate_psi_ci(psi_list)[0] for psi_list in psi_lists]
     error_margins = [calculate_psi_ci(psi_list)[1] for psi_list in psi_lists]
 
-    psi_severities = [psi_to_severity(psi) for psi in psi_values]
+    psi_severities = [frsi_to_severity(frsi) for frsi in frsi_values]
 
     plot_paths = []
     for img_list in location_dict.values():

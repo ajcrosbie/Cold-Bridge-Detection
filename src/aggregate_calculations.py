@@ -65,6 +65,17 @@ def get_psis(images: list[Image]) -> np.ndarray:
     
     return psis
 
+def get_frsis(images: list[Image]) -> np.ndarray:
+    """
+    Caclculates frsi value for each image in the array.
+    
+    :param images: array of Images
+    :return frsis: array of frsi values, one corresponding to each image
+    """
+    frsis = np.array([value_calculation.calc_frsi(float(np.mean(img.cb_pix)), img.int_amb, img.ext) for img in images])
+    
+    return frsis
+
 def plot_sensitivities(images: list[Image], location: str = "", show: bool =False) -> str:
     """
     Plots sensitivity to external temperature and returns path to the image
@@ -155,7 +166,7 @@ def plot_psis(cbs: dict[str, list[Image]], show: bool=False) -> str:
 
     return path
 
-def plot_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: bool =False, bar: bool = True) -> str:
+def plot_psi_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: bool =False, bar: bool = True) -> str:
     """
     Plots box plot of containing the severity of each cold bridge in cbs, on a cale from 0 to 10,
     By default, 10 is most severe and 0 being ideal
@@ -170,6 +181,48 @@ def plot_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: 
 
     # convert all psi values to severities
     sevs = [psi_to_severity(cb[1], high_worse) for cb in ranked]
+
+    plt.title("Severity rating by location")
+    plt.ylim(0, 10)
+    plt.ylabel(f"Severity rating (higher {"worse" if high_worse else "better"})")
+    plt.xlabel("Location")
+
+    if bar:
+        plt.bar(locs, sevs)
+    else:
+        # categorical data so only need a tick at each location
+        plt.xticks(np.arange(len(sevs)), labels=locs)
+        # y tick for each of 0-10 inclusive
+        plt.yticks(np.arange(11))
+
+        plt.scatter(np.arange(len(sevs)), sevs)
+
+    if show:
+        plt.show()
+    else:
+        
+        plt.savefig(path)
+        plt.close()
+
+    return path
+
+def plot_severities(cbs: dict[str, list[Image]], high_worse: bool = True, show: bool =False, bar: bool = True) -> str:
+    """
+    Plots box plot of containing the severity of each cold bridge in cbs, on a cale from 0 to 10,
+    By default, 10 is most severe and 0 being ideal
+
+    :param cbs: Each Image array corresponds to one suspected cold bridge
+    :param high_worse: (boolean) saying if high severity is bad or good
+    
+    """
+    path = f'{GRAPHPATH}severities.png'
+    locs = list(cbs.keys())
+    frsis = []
+    
+    for loc in locs:
+        frsis.append(np.mean(get_frsis(cbs[loc])))
+
+    sevs = [frsi_to_severity(f, high_worse) for f in frsis]
 
     plt.title("Severity rating by location")
     plt.ylim(0, 10)
@@ -240,6 +293,27 @@ def psi_to_severity(psi: float, high_worse: bool = True) -> float:
     psi = min(psi_high, max(psi, psi_low))
 
     sev = 0.5 + (psi - psi_low) * 9.5 / (psi_high-psi_low)
+
+    # flip severity if high_worse=False
+    return sev if high_worse else 10 - sev
+
+def frsi_to_severity(frsi: float, high_worse: bool = True) -> float:
+    """
+    Returns a severity on a scale from 0 to 10 given a frsi value
+    By default high values are more severe
+    
+    :param frsi: frsi value 
+    :return: ranking from 0-10
+    """
+
+    # frsi values typically range from 0.4 - 1 with lower being worse.
+    frsi_low = 0.4
+    frsi_high = 1
+
+    # trim psi to be in this range
+    frsi = min(frsi_high, max(frsi, frsi_low))
+
+    sev = 10 - (frsi - frsi_low) * 9 / (frsi_high - frsi_low)
 
     # flip severity if high_worse=False
     return sev if high_worse else 10 - sev
