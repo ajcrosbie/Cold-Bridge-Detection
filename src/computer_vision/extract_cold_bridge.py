@@ -102,7 +102,7 @@ def find_bridge_from_mask(mask: np.ndarray, want_rectangle: bool = True) -> Box:
     return Box(bridge_y, bridge_y + bridge_h, bridge_x, bridge_x + bridge_w)
 
 
-def find_bridge_from_img(t_min: float, t_max: float, temp_img: np.ndarray) -> np.ndarray:
+def find_bridge_from_img(t_min: float, t_max: float, temp_img: np.ndarray, UI_BOXES) -> np.ndarray:
     """
     Find the best candidate cold bridge region of the image ``temp_img``. This is done by iteratively changing the
     threshold temperature to find a mask of the image, and detecting connected components from the mask.
@@ -122,13 +122,13 @@ def find_bridge_from_img(t_min: float, t_max: float, temp_img: np.ndarray) -> np
     thresholds = [0.13, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8, 0.9]
     bridge = None
 
-    mask = detect_cold_mask(t_min, t_max, thresh[0], temp_img)
+    mask = detect_cold_mask(t_min, t_max, thresholds[0], temp_img, UI_BOXES)
     bridge = find_bridge_from_mask(mask, want_rectangle=True)
     if bridge:
         return bridge
 
     for thresh in thresholds[1:]:
-        mask = detect_cold_mask(t_min, t_max, thresh, temp_img)
+        mask = detect_cold_mask(t_min, t_max, thresh, temp_img, UI_BOXES)
         bridge = find_bridge_from_mask(mask, want_rectangle=False)
         if bridge:
             break
