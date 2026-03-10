@@ -56,10 +56,6 @@ def get_psis(images: list[Image]) -> np.ndarray:
     surface_temps = [i.sf_temp for i in images]
     exts = [i.ext for i in images]
 
-    print(f"surface_temps={surface_temps}, exts={exts}")
-    for i in images:
-        print(f"mean={np.mean(i.get_cb())}")
-
     # calculate psi value for every image and return as a np array
     psis = np.array([
         value_calculation.calc_psi (i.int_amb, i_ext, i_sfc, i.get_cb(), i.epsilon, i.lx, i.lch) 
@@ -108,8 +104,6 @@ def plot_sensitivities(images: list[Image], location: str = "", show: bool =Fals
         f.writelines(str(exts))
         f.writelines(str(cb_temps))
 
-    print(exts)
-    print(cb_temps)
     plt.scatter(exts, cb_temps)
 
     # plots best fit line

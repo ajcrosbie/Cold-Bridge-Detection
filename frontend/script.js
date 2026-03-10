@@ -807,8 +807,6 @@ const sendImagesForAnalysis = async () => {
         form.append('camera_types', img.cameraType);
     });
 
-    console.log(form);
-
     const resp = await fetch('http://localhost:8000/analyse-images/', {
         method: 'POST',
         body: form
@@ -1040,10 +1038,9 @@ SubmitBtn.addEventListener('click', async () => {
 
         // waiting for the pretend backend to reply
         const response = await sendImagesForAnalysis()
-
         console.log(response)
 
-        // passing our fake data into the display function so it shows up on screen
+        // passing data into the display function so it shows up on screen
         displayResults(response)
 
     } catch (error) {
