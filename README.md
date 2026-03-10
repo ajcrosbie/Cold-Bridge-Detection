@@ -26,6 +26,6 @@ Ensure it's added to your path
 
 to run the server
 ```
-fastapi run ser/main.py
+fastapi run main.py
 ```
 There also needs to be a public webpage that the users can interact with. The contents of this webpage can be found in /frontend
