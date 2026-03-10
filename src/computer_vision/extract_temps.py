@@ -60,7 +60,7 @@ def find_text_float(img:np.ndarray) ->  float:
     # -c tessedit_char_whitelist=...: only allow digits and a period and minus sign
     text = pytesseract.image_to_string(img, config=custom_config) # This might be crap but I have seen it before
     # remove all chars not a digit or point
-    clean_text = re.sub(r'[^\d-.]', '', text)
+    clean_text = re.sub(r'[^\d.]', '', text)
     try:
         temp = float(clean_text)
     except ValueError:

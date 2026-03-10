@@ -948,7 +948,7 @@ const displayResults = (data) => {
         { label: 'Locations Analysed', value: `${analysedLocations.length}` },
         { label: 'Average Severity Index', value: averageSeverity.toFixed(1) },
         { label: 'Average Psi Value', value: `${averagePsi.toFixed(2)} W/mK` },
-        { label: 'Average Error Margin', value: `±${averageErrorMargin.toFixed(2)}°C` }
+        { label: 'Average Error Margin', value: `±${averageErrorMargin.toFixed(2)}W/mK` }
     ]);
 
     // tech stats (if any)
