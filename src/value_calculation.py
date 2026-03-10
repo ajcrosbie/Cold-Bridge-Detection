@@ -68,15 +68,12 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
     Returns:
     psi (float): psi-value
     """
-    print(f"pix_temps={pix_temps}, min = {np.min(pix_temps)}, max = {np.max(pix_temps)}")
-    print(f"int_amb[={int_amb}, ext={ext}, t_wall={t_wall}, epsilon={epsilon}, lx={lx}, lch={lch}")
     # TODO: MAKE NEATER
     # converting all celcius temps we receive to kelvin
     int_amb = int_amb + 273.15
     ext = ext + 273.15
     t_wall = t_wall + 273.15
     pix_temps = pix_temps + 273.15
-
 
     # defining constants
     # thermal conductivity of air in W / (m.K) - changes with internal ambient temperature at constant pressure which we can assume
@@ -141,18 +138,15 @@ def calc_psi(int_amb: float, ext: float, t_wall: float, pix_temps: np.ndarray, e
         # bigger vertical variance = horizontal cb
         # sum horizontally
         qtb = np.mean(np.sum(qxtb, axis=1))
-        print("summed horizontally")
     else:
         # bigger horizontal variance = vertical cb
         # sum vertically
         qtb = np.mean(np.sum(qxtb, axis=0))
-        print("summed veritcally")
 
     if int_amb == ext:
         return 0.0  # how do we want to handle this its an invalid input tbh
     # calculate psi value
     psi = qtb / (int_amb - ext)
-    print(f"psi={psi}")
     return float(psi)
 
 def calc_pixel_length(camera: str, distance: float = 2.0) -> float:

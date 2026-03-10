@@ -7,14 +7,9 @@ import os
 from src.computer_vision.imageRunnner import run_images
 import numpy as np
 from src.value_calculation import calc_pixel_length
-import logging
 import numpy as np
 import cv2
  
-logger = logging.getLogger("uvicorn.error")
-logger.setLevel(logging.INFO)
-
-
 app = FastAPI()
 
 app.add_middleware(
@@ -46,8 +41,6 @@ def analyse_images(
     Accept multiple image files, a location name per image, and payload parameters.
     Returns a dictionary containing data to be used by the frontend
     """
-    with open("Backendlogs.txt", "a") as f:
-        f.write("Request received\n")
 
     # Validate lengths
     if not (len(files) == len(locations) == len(int_amb_temps) == len(ext_temps) == len(emissivities)
@@ -114,15 +107,6 @@ def analyse_images(
     plot_paths.append(plot_psis(location_dict))
     plot_paths.append(plot_frsis(location_dict)) 
 
-    print("List lengths equal: " + str(len(psi_lists)==len(psi_severities)==len(error_margins)))
-         
-    print( {
-        "locations": list(location_dict.keys()),
-        "psis": psi_values,
-        "psi_severities": psi_severities,
-        "error_margins": error_margins,
-        "plots": plot_paths
-    })
     return {
         "locations": list(location_dict.keys()),
         "psis": psi_values,

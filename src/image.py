@@ -15,6 +15,4 @@ class Image :
         Returns a float[] of pixels that appear in the cold bridge
         Placeholder for now
         """
-        return self.cb_pix
-
-    
+        return self.cb_pix  
