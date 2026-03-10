@@ -157,7 +157,7 @@ def plot_psis(cbs: dict[str, list[Image]], show: bool=False) -> str:
     plt.title("Psi value against location")
     plt.ylabel("Psi, W/mK")
     plt.xlabel("Location")
-    plt.boxplot(np.transpose(psis), tick_labels=locs, vert=True)
+    plt.boxplot(psis, tick_labels=locs, vert=True)
 
     # either draw graph to display or save to file
     if show:
@@ -260,15 +260,15 @@ def plot_frsis(cbs: dict[str, list[Image]], show: bool =False) -> str:
     locs = list(cbs.keys())
 
     # calculates frsi for every image in 2d array cbs
-    frsis = np.array([[value_calculation.calc_frsi(float(np.mean(img.cb_pix)), img.int_amb, img.ext) 
-                       for img in cb_images] 
-                      for cb_images in cbs.values()])
+    frsis = [[value_calculation.calc_frsi(float(np.mean(img.cb_pix)), img.int_amb, img.ext) 
+              for img in cb_images] 
+             for cb_images in cbs.values()]
 
     plt.title("Frsi value by location")
     plt.ylabel("Frsi")
     plt.xlabel("Location")
 
-    plt.boxplot(np.transpose(frsis), tick_labels=locs, vert=True)
+    plt.boxplot(frsis, tick_labels=locs, vert=True)
 
     if show:
         plt.show()
