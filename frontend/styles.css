@@ -424,9 +424,23 @@ h2, h3, h4 {
 .analysed-image-preview-wrap {
     width: 50%;
     height: auto;
-    border-radius: 10px;
+    border-radius: 14px;
+    padding: 20px;
     overflow: hidden;
-    background: rgba(0,0,0,0.25);
+}
+
+.severity-plot-container {
+    width: 80%;
+    height: auto;
+    border-radius: 14px;
+    padding: 20px;
+    overflow: hidden;
+}
+
+.severity-plot {
+    height: auto;
+    padding-top: 10px;
+    overflow: hidden;
 }
 
 .analysed-image-preview-wrap img {

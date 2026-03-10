@@ -783,7 +783,8 @@ const renderAnalysedLocations = (locations) => {
 
             <div class="severity-plot-container">
                 <h5>Sensitivity Plot</h5>
-                <img src="${location.plotUrl}" alt="Sensitivity plot for ${location.locationName}" class="severity-plot">
+                <img src="${location.plotUrl}" alt="Sensitivity plot for ${location.locationName} not generated. This may be because only one image was 
+                labelled as being from this location. With only one image there is nothing to plot." class="severity-plot">
             </div>
         `
 
@@ -890,7 +891,7 @@ const displayResults = (data) => {
 
     // render overall plots (severities, psis, frsis)
     const overallPlots = data.plots.slice(data.locations.length);
-    const plotNames = ['Severity Plot', 'Psi Value Graph', 'FRSI Graph'];
+    const plotNames = ['Severity Plot', 'Psi Value Graph', 'f<sub>rsi</sub> Graph'];
     document.getElementById('overallPlots').innerHTML = overallPlots.map((url, idx) => {
         if(showAdvanced || plotNames[idx] != 'Psi Value Graph') {
             return `<div class="overall-plot">
