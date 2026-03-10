@@ -1,4 +1,4 @@
-
+import re
 import cv2
 import numpy as np
 import pytesseract
@@ -56,10 +56,17 @@ def getBoxes(FLIR):
 
     
 def find_text_float(img:np.ndarray) ->  float:    
-    custom_config = r'--psm 8'
+    custom_config = r'--oem 3 --psm 8 -c tessedit_char_whitelist=-0123456789.'
+    # -c tessedit_char_whitelist=...: only allow digits and a period and minus sign
     text = pytesseract.image_to_string(img, config=custom_config) # This might be crap but I have seen it before
+    # remove all chars not a digit or point
+    clean_text = re.sub(r'[^\d.]', '', text)
+    try:
+        temp = float(clean_text)
+    except ValueError:
+        print(f"Warning: Could not convert '{clean_text}' to float. Original text: '{text}'")
+        temp = 20.0 # toby plaster fix
 
-    temp = float(text.strip().replace("°C", "")) # More processing may be needed here fore more the non flir
     return temp
 
 
