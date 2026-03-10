@@ -40,7 +40,7 @@ const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.tif', '.tiff']
 
 // this function takes the stats array and turns it into html blocks so we dont get collision tings innit brevski
 const generateStatsHTML = (statsArray) => {
-
+    const showAdvanced = ShowAdvancedInfoCheckbox.checked;
 
     // if the array is empty we just return nothing
     if (!statsArray || statsArray.length === 0) {
@@ -48,14 +48,18 @@ const generateStatsHTML = (statsArray) => {
     }
 
     // we map over every stat in the array and return a string of html
-    return statsArray.map(stat => `
-
-        <div class="stat-card">
-            <div class="stat-label">${stat.label}</div>
-            <div class="stat-value">${stat.value}</div>
-        </div>
-    
-    `).join('')
+    return statsArray.map(stat => {
+        if(showAdvanced || (!showAdvanced && !stat.advanced)) {
+            return `
+                <div class="stat-card">
+                    <div class="stat-label">${stat.label}</div>
+                    <div class="stat-value">${stat.value}</div>
+                </div>
+                `;
+        } else {
+            return '';
+        }
+    }).join('')
     // then we join it together
 
 
@@ -229,11 +233,11 @@ const renderSelectedFiles = () => {
                 <label for="inttemp-${image.id}">Internal Temp (°C)</label>
                 <input type="number" id="inttemp-${image.id}" class="selected-file-input ${image.hasInternalTempError ? 'input-invalid' : ''}" placeholder="e.g. 20" value="${image.internalTemp}" step="0.1">
                 <div class="field-error">${image.hasInternalTempError ? 'Internal temperature required.' : ''}</div>
-            
+           
                 <label for="exttemp-${image.id}">External Temp (°C)</label>
                 <input type="number" id="exttemp-${image.id}" class="selected-file-input ${image.hasExternalTempError ? 'input-invalid' : ''}" placeholder="e.g. 5" value="${image.externalTemp}" step="0.1">
                 <div class="field-error">${image.hasExternalTempError ? 'External temperature required.' : ''}</div>
-            
+           
                 <label for="wallheight-${image.id}">Wall Height (m)</label>
                 <input type="number" id="wallheight-${image.id}" class="selected-file-input ${image.hasWallHeightError ? 'input-invalid' : ''}" placeholder="e.g. 2.5" value="${image.wallHeight}" step="0.1">
                 <div class="field-error">${image.hasWallHeightError ? 'Wall height required.' : ''}</div>
@@ -473,7 +477,7 @@ const handleFiles = async (files) => {
 
             // if it reaches here then it is not something we accept
             invalidFiles.push(file.name)
-            
+           
         }
 
         // deduping by name + size + lastModified so we dont stack accidental doubles forever
@@ -721,7 +725,7 @@ const renderApiGraph = (graphData) => {
 
 // this makes the location result cards for each analysed location
 const renderAnalysedLocations = (locations) => {
-
+    const showAdvanced = ShowAdvancedInfoCheckbox.checked;
 
     // wiping any old location cards
     AnalysedImagesList.innerHTML = ''
@@ -729,7 +733,7 @@ const renderAnalysedLocations = (locations) => {
     // looping over every analysed location the backend sent back
     locations.forEach(location => {
 
-        const filteredImages = currentThermalImages.filter((img) => 
+        const filteredImages = currentThermalImages.filter((img) =>
             img.locationName === location.locationName
         )
 
@@ -738,6 +742,20 @@ const renderAnalysedLocations = (locations) => {
         // making the main result card
         const card = document.createElement('div')
         card.className = 'analysed-image-card'
+
+        AveragePsiValueHTML = showAdvanced ? `
+        <div class="stat-card">
+            <div class="stat-label advanced-info">Average Psi Value</div>
+            <div class="stat-value">${location.psiValue}</div>
+        </div>
+        ` : '';
+
+        AverageErrorMarginHTML = showAdvanced ? `
+        <div class="stat-card">
+            <div class="stat-label advanced-info">Average Error Margin</div>
+            <div class="stat-value">${location.errorMargin}</div>
+        </div>
+        ` : '';
 
         // putting the structure into the card
         card.innerHTML = `
@@ -749,18 +767,12 @@ const renderAnalysedLocations = (locations) => {
             </div>
 
             <div class="stats-grid image-stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Average Psi Value</div>
-                    <div class="stat-value">${location.psiValue}</div>
-                </div>
+                ${AveragePsiValueHTML}
                 <div class="stat-card">
                     <div class="stat-label">Average Severity Index</div>
                     <div class="stat-value">${location.severityIndex.toFixed(1)}</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">Average Error Margin</div>
-                    <div class="stat-value">${location.errorMargin}</div>
-                </div>
+                ${AverageErrorMarginHTML}
             </div>
 
             <div class="analysed-image-preview-wrap">
@@ -812,7 +824,7 @@ const sendImagesForAnalysis = async () => {
 
 // this collects per-image analysis data for the backend
 const collectAnalysisData = () => {
-    
+   
     const locations = currentThermalImages.map(img => img.locationName)
     const intAmbTemps = currentThermalImages.map(img => Number(img.internalTemp))
     const extTemps = currentThermalImages.map(img => Number(img.externalTemp))
@@ -821,7 +833,7 @@ const collectAnalysisData = () => {
     const wallHeights = currentThermalImages.map(img => Number(img.wallHeight))
     const cameraTypes = currentThermalImages.map(img => img.cameraType)
     const distances = currentThermalImages.map(img => img.distance)
-    
+   
     return {
         locations,
         intAmbTemps,
@@ -837,6 +849,7 @@ const collectAnalysisData = () => {
 
 // function to show the results when the backend sends them back
 const displayResults = (data) => {
+    const showAdvanced = ShowAdvancedInfoCheckbox.checked;
 
     const API_BASE_URL = 'http://localhost:8000';
 
@@ -864,10 +877,10 @@ const displayResults = (data) => {
 
     // general stats
     GeneralStatsGrid.innerHTML = generateStatsHTML([
-        { label: 'Locations Analysed', value: `${analysedLocations.length}` },
-        { label: 'Average Severity Index', value: averageSeverity.toFixed(1) },
-        { label: 'Average Psi Value', value: `${averagePsi.toFixed(2)} W/mK` },
-        { label: 'Average Error Margin', value: `±${averageErrorMargin.toFixed(2)} W/mK` }
+        { label: 'Locations Analysed', value: `${analysedLocations.length}`, advanced: false},
+        { label: 'Average Severity Index', value: averageSeverity.toFixed(1), advanced: false},
+        { label: 'Average Psi Value', value: `${averagePsi.toFixed(2)} W/mK`, advanced: true},
+        { label: 'Average Error Margin', value: `±${averageErrorMargin.toFixed(2)} W/mK`, advanced: true}
     ]);
 
     // tech stats (if any)
@@ -879,12 +892,16 @@ const displayResults = (data) => {
     // render overall plots (severities, psis, frsis)
     const overallPlots = data.plots.slice(data.locations.length);
     const plotNames = ['Severity Plot', 'Psi Value Graph', 'FRSI Graph'];
-    document.getElementById('overallPlots').innerHTML = overallPlots.map((url, idx) => `
-        <div class="overall-plot">
+    document.getElementById('overallPlots').innerHTML = overallPlots.map((url, idx) => {
+        if(showAdvanced || plotNames[idx] != 'Psi Value Graph') {
+            return `<div class="overall-plot">
             <h3>${plotNames[idx]}</h3>
             <img src="${API_BASE_URL}/${url}?t=${Date.now()}" alt="${plotNames[idx]}" style="max-width: 100%; height: auto;">
-        </div>
-    `).join('');
+            </div>`;
+        } else {
+            return '';
+        }
+    }).join('');
 
     // show results section
     ResultsSection.style.display = 'block';
