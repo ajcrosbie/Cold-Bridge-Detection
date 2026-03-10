@@ -851,7 +851,7 @@ const displayResults = (data) => {
         psiValue: `${data.psis[idx].toFixed(2)} W/mK`,
         severityIndex: data.psi_severities[idx],
         errorMargin: `±${data.error_margins[idx].toFixed(2)} W/mK`,
-        plotUrl: `${API_BASE_URL}/${data.plots[idx]}`
+        plotUrl: `${API_BASE_URL}/${data.plots[idx]}?t=${Date.now()}`
     }));
 
     // calculate overall stats
