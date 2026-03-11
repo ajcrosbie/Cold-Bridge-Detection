@@ -123,13 +123,13 @@ def extract_from_box(img:np.ndarray, box:Box) -> np.ndarray:
     return img[box.yt:box.yb,
               box.xl:box.xr]
 
-def image_to_temperature_map(img:np.ndarray, boxes: tuple[Box, Box, Box, list[Box]]) -> tuple[np.ndarray, float, float]:
+def image_to_temperature_map(img: np.ndarray, boxes: tuple[Box, Box, Box, list[Box]]) -> tuple[np.ndarray, float, float]:
     """
-    Load the argument ``image_path`` as an array representing the BGR image. Use the temperature bar present in the 
+    Load the argument `img`, an array representing the BGR image. Use the temperature bar present in the 
     thermal image to convert the BGR image into a 2D array of the temperature image. 
 
     Parameters:
-    image_path (PathLike): The path to the thermal image to be loaded.
+    img (np.ndarray): The numpy array representing the thermal image.
 
     Returns:
     (tuple[np.ndarray, float, float]): The first element of the tuple contains a 2D numpy array of datatype float64,
